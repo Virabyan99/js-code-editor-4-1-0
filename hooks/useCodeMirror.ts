@@ -8,6 +8,7 @@ import {
   highlightActiveLine,
   rectangularSelection,
   crosshairCursor,
+  lineNumbers,
 } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, historyKeymap, history } from '@codemirror/commands';
@@ -51,6 +52,7 @@ export function useCodeMirror(container: React.RefObject<HTMLDivElement>) {
       crosshairCursor(),                               // Cursor crosshair for rectangular selection
       highlightActiveLine(),                           // Highlight the active line
       highlightSelectionMatches(),                     // Highlight matching text selections
+      lineNumbers()
     ];
 
     // Typing animation listener
