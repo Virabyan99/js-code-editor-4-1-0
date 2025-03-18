@@ -27,9 +27,9 @@ export default function IconWithHover({
   return (
     <motion.div
       initial={{ backgroundColor: "#f3f4f6" }}
-      whileHover={{ backgroundColor: "#000000", scale: 1.1, rotate: 360 }}
+      whileHover={{ backgroundColor: "#000000", scale: 1.1,  }}
       transition={{ duration: 0.7 }}
-      className={`rounded-full p-1 ${className}`}
+      className={`rounded-sm p-1 ${className}`}
       role="button"
       aria-label={
         variant === "upload"
@@ -47,7 +47,7 @@ export default function IconWithHover({
         whileHover={{ color: "#ffffff" }}
         transition={{ duration: 0.7 }}
       >
-        <IconComponent size={12} />
+        <IconComponent size={14} />
       </motion.div>
     </motion.div>
   );

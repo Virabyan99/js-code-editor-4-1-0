@@ -117,14 +117,14 @@ export default function ResizablePanel() {
       }`}
     >
       <animated.div
-        className={`relative h-1/2 w-full rounded-lg p-4 shadow-md md:h-full ${
-          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+        className={`relative h-1/2 w-full rounded-[7px] p-4 shadow-md md:h-full ${
+          theme === "dark" ? "bg-gray-700 text-gray-100" : "bg-gray-100 text-gray-900"
         }`}
         style={{
           width: windowWidth > 768 ? props.width.to((w) => `${w}vw`) : "100%",
         }}
       >
-        <div ref={editorContainerRef} className="h-full w-full mt-3 overflow-hidden font-fira" />
+        <div ref={editorContainerRef} className="h-full w-full mt-3 overflow-hidden  text-[16px] font-fira" />
         <IconWithHover
           variant="upload"
           className="absolute left-2 top-2"
@@ -152,7 +152,7 @@ export default function ResizablePanel() {
         aria-label="Resize panels"
       ></div>
       <div
-        className={`relative h-1/2 w-full rounded-lg p-4 shadow-md md:h-full md:flex-1 ${
+        className={`relative h-1/2 w-full rounded-[7px] p-4 shadow-md md:h-full md:flex-1 ${
           theme === "dark" ? "bg-gray-700" : "bg-gray-100"
         }`}
       >

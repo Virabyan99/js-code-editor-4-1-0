@@ -1,5 +1,4 @@
-// fadeInExtension.ts
-import { StateEffect, StateField,  } from "@codemirror/state";
+import { StateEffect, StateField } from "@codemirror/state";
 import { Decoration, DecorationSet, EditorView } from "@codemirror/view";
 
 // Define the effect to mark text for animation
@@ -30,14 +29,23 @@ export const fadeInField = StateField.define<DecorationSet>({
   provide: (field) => EditorView.decorations.from(field),
 });
 
-// CSS for the fade-in animation
+// CSS for the fade-in and flying animations
 export const fadeInTheme = EditorView.theme({
   ".cm-fade-in": {
-    animation: "fadeIn 1.2s ease-in",
+    animation: "fadeIn 1.2s ease-in, flyIn 0.3s ease-out",
   },
   "@keyframes fadeIn": {
     from: { opacity: "0.6" },
     to: { opacity: "1" },
+  },
+  "@keyframes flyIn": {
+    from: { transform: "translateY(-10px)" },
+    to: { transform: "translateY(0)" },
+  },
+  // Optionally, keep the highlight animation if you like it
+  "@keyframes highlight": {
+    from: { "background-color": "rgba(255, 255, 0, 0.3)" },
+    to: { "background-color": "transparent" },
   },
 });
 
