@@ -12,12 +12,23 @@ export function useCodeMirror(container: React.RefObject<HTMLDivElement>) {
   useEffect(() => {
     if (!container.current) return;
 
+    const editorTheme = EditorView.theme({
+        "&": {
+          fontFamily: "var(--font-fira-code), monospace", // Use the CSS variable for Fira Code
+          fontFeatureSettings: '"liga" 1', // Enable ligatures
+          spellCheck: "false", // Disable spellcheck
+          "-webkit-font-smoothing": "antialiased", // Improve font rendering
+        },
+      });
+
     // Define the editor state with placeholder and JavaScript syntax
     const state = EditorState.create({
       extensions: [
         basicSetup,
         javascript(),
+        
         placeholder("Start typing..."), // Add placeholder
+        editorTheme, // Apply custom theme
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             // Update Zustand store when content changes

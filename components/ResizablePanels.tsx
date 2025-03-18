@@ -63,7 +63,9 @@ export default function ResizablePanel() {
         }}
       >
         {/* Replace static content with CodeMirror */}
-        <div ref={editorContainerRef} className="h-full w-full overflow-hidden" />
+        <div ref={editorContainerRef} className="h-full w-full overflow-hidden font-fira" 
+            
+        />
         <IconWithHover className="absolute left-2 top-2" />
         <IconWithHover className="absolute right-2 top-2" />
         <IconWithHover className="absolute bottom-2 left-2" />
