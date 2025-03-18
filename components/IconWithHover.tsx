@@ -1,19 +1,28 @@
 // components/IconWithHover.tsx
 import { motion } from "framer-motion";
-import { IconCircleDotted, IconUpload, IconDownload } from "@tabler/icons-react";
+import { IconCircleDotted, IconUpload, IconDownload, IconSun, IconMoon } from "@tabler/icons-react";
 
 interface IconWithHoverProps {
   className?: string;
-  variant?: "circle" | "upload" | "download"; // Add download variant
-  onClick?: () => void; // Click handler remains for all variants
+  variant?: "circle" | "upload" | "download" | "sun" | "moon";
+  onClick?: () => void;
 }
 
 export default function IconWithHover({
   className,
-  variant = "circle", // Default to circle
+  variant = "circle",
   onClick,
 }: IconWithHoverProps) {
-  const IconComponent = variant === "upload" ? IconUpload : variant === "download" ? IconDownload : IconCircleDotted;
+  const IconComponent =
+    variant === "upload"
+      ? IconUpload
+      : variant === "download"
+      ? IconDownload
+      : variant === "sun"
+      ? IconSun
+      : variant === "moon"
+      ? IconMoon
+      : IconCircleDotted;
 
   return (
     <motion.div
@@ -27,6 +36,8 @@ export default function IconWithHover({
           ? "Upload JavaScript file"
           : variant === "download"
           ? "Download code"
+          : variant === "sun" || variant === "moon"
+          ? "Toggle theme"
           : "Interactive icon"
       }
       onClick={onClick}

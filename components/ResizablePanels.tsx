@@ -6,6 +6,7 @@ import IconWithHover from "./IconWithHover";
 import { useCodeMirror } from "@/hooks/useCodeMirror";
 import { toast } from "react-toastify";
 import { parse } from "acorn";
+import { useThemeStore } from "@/store/themeStore";
 
 const MIN_WIDTH_VW = 24;
 const MAX_WIDTH_VW = 70;
@@ -16,6 +17,7 @@ export default function ResizablePanel() {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const { editorView } = useCodeMirror(editorContainerRef);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { theme, toggleTheme } = useThemeStore();
 
   const [props, api] = useSpring(() => ({
     width: INITIAL_WIDTH_VW,
@@ -53,12 +55,10 @@ export default function ResizablePanel() {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
-  // Trigger the hidden file input for upload
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle file upload and validation
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -90,7 +90,6 @@ export default function ResizablePanel() {
     reader.readAsText(file);
   };
 
-  // Handle download of editor content
   const handleDownload = () => {
     if (!editorView || editorView.state.doc.length === 0) {
       toast.error("Editor is empty");
@@ -98,7 +97,7 @@ export default function ResizablePanel() {
     }
 
     const content = editorView.state.doc.toString();
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-"); // e.g., 2024-10-25-14-30-45
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `${timestamp}.js`;
     const blob = new Blob([content], { type: "text/javascript" });
     const url = URL.createObjectURL(blob);
@@ -112,21 +111,25 @@ export default function ResizablePanel() {
   };
 
   return (
-    <main className="flex h-screen w-screen flex-col p-[0.25rem] md:flex-row md:p-[0.75rem] gap-2 md:gap-1">
+    <main
+      className={`flex h-screen w-screen flex-col p-[0.25rem] md:flex-row md:p-[0.75rem] gap-2 md:gap-1 ${
+        theme === "dark" ? "bg-gray-800 text-white" : "bg-gray-100 text-black"
+      }`}
+    >
       <animated.div
-        className="relative h-1/2 w-full rounded-lg bg-gray-100 p-4 shadow-md md:h-full"
+        className={`relative h-1/2 w-full rounded-lg p-4 shadow-md md:h-full ${
+          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+        }`}
         style={{
           width: windowWidth > 768 ? props.width.to((w) => `${w}vw`) : "100%",
         }}
       >
         <div ref={editorContainerRef} className="h-full w-full mt-3 overflow-hidden font-fira" />
-        {/* Upload icon (top-left) */}
         <IconWithHover
           variant="upload"
           className="absolute left-2 top-2"
           onClick={triggerFileInput}
         />
-        {/* Hidden file input */}
         <input
           type="file"
           ref={fileInputRef}
@@ -134,7 +137,6 @@ export default function ResizablePanel() {
           accept=".js"
           className="hidden"
         />
-        {/* Download icon (top-right) */}
         <IconWithHover
           variant="download"
           className="absolute right-2 top-2"
@@ -149,11 +151,19 @@ export default function ResizablePanel() {
         role="separator"
         aria-label="Resize panels"
       ></div>
-      <div className="relative h-1/2 w-full rounded-lg bg-gray-100 p-4 shadow-md md:h-full md:flex-1">
+      <div
+        className={`relative h-1/2 w-full rounded-lg p-4 shadow-md md:h-full md:flex-1 ${
+          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+        }`}
+      >
         <h2 className="ml-7">Right Panel</h2>
         <IconWithHover className="absolute left-2 top-2" />
         <IconWithHover className="absolute right-2 top-2" />
-        <IconWithHover className="absolute bottom-2 left-2" />
+        <IconWithHover
+          variant={theme === "light" ? "moon" : "sun"}
+          className="absolute bottom-2 left-2"
+          onClick={toggleTheme}
+        />
         <IconWithHover className="absolute bottom-2 right-2" />
       </div>
     </main>
