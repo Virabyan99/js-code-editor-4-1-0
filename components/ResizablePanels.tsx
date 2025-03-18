@@ -1,10 +1,11 @@
 // components/ResizablePanels.tsx
 "use client";
-
+import { useState, useEffect, useRef } from "react";
 import { useSpring, animated } from "react-spring";
 import IconWithHover from "./IconWithHover";
 import { useCodeMirror } from "@/hooks/useCodeMirror";
-import { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import { parse } from "acorn";
 
 const MIN_WIDTH_VW = 24;
 const MAX_WIDTH_VW = 70;
@@ -12,16 +13,15 @@ const INITIAL_WIDTH_VW = 48;
 
 export default function ResizablePanel() {
   const [windowWidth, setWindowWidth] = useState(0);
-  const editorContainerRef = useRef<HTMLDivElement>(null); // Ref for the editor container
-  const { editorView } = useCodeMirror(editorContainerRef); // Initialize CodeMirror
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const { editorView } = useCodeMirror(editorContainerRef);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Spring animation for the panel width
   const [props, api] = useSpring(() => ({
     width: INITIAL_WIDTH_VW,
     config: { tension: 200, friction: 50, mass: 1 },
   }));
 
-  // Update window width on mount and resize
   useEffect(() => {
     const updateWindowWidth = () => setWindowWidth(window.innerWidth);
     updateWindowWidth();
@@ -29,7 +29,6 @@ export default function ResizablePanel() {
     return () => window.removeEventListener("resize", updateWindowWidth);
   }, []);
 
-  // Handle divider dragging
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     const initialMouseX = e.clientX;
@@ -54,6 +53,64 @@ export default function ResizablePanel() {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
+  // Trigger the hidden file input for upload
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file upload and validation
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) {
+      toast.error("File size exceeds 1MB");
+      return;
+    }
+
+    if (!file.name.endsWith(".js")) {
+      toast.error("Only .js files are allowed");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      try {
+        parse(content, { ecmaVersion: "latest" });
+        if (editorView) {
+          editorView.dispatch({
+            changes: { from: 0, to: editorView.state.doc.length, insert: content },
+          });
+        }
+      } catch (error) {
+        toast.error("Invalid JavaScript file");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Handle download of editor content
+  const handleDownload = () => {
+    if (!editorView || editorView.state.doc.length === 0) {
+      toast.error("Editor is empty");
+      return;
+    }
+
+    const content = editorView.state.doc.toString();
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-"); // e.g., 2024-10-25-14-30-45
+    const filename = `${timestamp}.js`;
+    const blob = new Blob([content], { type: "text/javascript" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <main className="flex h-screen w-screen flex-col p-[0.25rem] md:flex-row md:p-[0.75rem] gap-2 md:gap-1">
       <animated.div
@@ -62,12 +119,27 @@ export default function ResizablePanel() {
           width: windowWidth > 768 ? props.width.to((w) => `${w}vw`) : "100%",
         }}
       >
-        {/* Replace static content with CodeMirror */}
-        <div ref={editorContainerRef} className="h-full w-full overflow-hidden font-fira" 
-            
+        <div ref={editorContainerRef} className="h-full w-full mt-3 overflow-hidden font-fira" />
+        {/* Upload icon (top-left) */}
+        <IconWithHover
+          variant="upload"
+          className="absolute left-2 top-2"
+          onClick={triggerFileInput}
         />
-        <IconWithHover className="absolute left-2 top-2" />
-        <IconWithHover className="absolute right-2 top-2" />
+        {/* Hidden file input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          accept=".js"
+          className="hidden"
+        />
+        {/* Download icon (top-right) */}
+        <IconWithHover
+          variant="download"
+          className="absolute right-2 top-2"
+          onClick={handleDownload}
+        />
         <IconWithHover className="absolute bottom-2 left-2" />
         <IconWithHover className="absolute bottom-2 right-2" />
       </animated.div>

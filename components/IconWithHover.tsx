@@ -1,26 +1,42 @@
-import { motion } from 'framer-motion';
-import { IconCircleDotted } from '@tabler/icons-react';
+// components/IconWithHover.tsx
+import { motion } from "framer-motion";
+import { IconCircleDotted, IconUpload, IconDownload } from "@tabler/icons-react";
 
 interface IconWithHoverProps {
   className?: string;
+  variant?: "circle" | "upload" | "download"; // Add download variant
+  onClick?: () => void; // Click handler remains for all variants
 }
 
-export default function IconWithHover({ className }: IconWithHoverProps) {
+export default function IconWithHover({
+  className,
+  variant = "circle", // Default to circle
+  onClick,
+}: IconWithHoverProps) {
+  const IconComponent = variant === "upload" ? IconUpload : variant === "download" ? IconDownload : IconCircleDotted;
+
   return (
     <motion.div
-      initial={{ backgroundColor: '#f3f4f6' }} // Initial color equivalent to bg-gray-100
-      whileHover={{ backgroundColor: '#000000', scale: 1.1, rotate: 360 }}
-      transition={{ duration: 0.7 }} // Smooth transition over 0.7 seconds
-      className={`rounded-full p-1 ${className}`} // Removed bg-gray-100
+      initial={{ backgroundColor: "#f3f4f6" }}
+      whileHover={{ backgroundColor: "#000000", scale: 1.1, rotate: 360 }}
+      transition={{ duration: 0.7 }}
+      className={`rounded-full p-1 ${className}`}
       role="button"
-      aria-label="Interactive icon"
+      aria-label={
+        variant === "upload"
+          ? "Upload JavaScript file"
+          : variant === "download"
+          ? "Download code"
+          : "Interactive icon"
+      }
+      onClick={onClick}
     >
       <motion.div
-        initial={{ color: '#000000' }} // Explicit initial color for the icon
-        whileHover={{ color: '#ffffff' }} // Smoothly transitions to white
-        transition={{ duration: 0.7 }} // Matches outer transition duration
+        initial={{ color: "#000000" }}
+        whileHover={{ color: "#ffffff" }}
+        transition={{ duration: 0.7 }}
       >
-        <IconCircleDotted size={12} /> {/* Half size: 12px */}
+        <IconComponent size={12} />
       </motion.div>
     </motion.div>
   );
