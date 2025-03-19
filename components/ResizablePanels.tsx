@@ -7,9 +7,8 @@ import { useCodeMirror } from '@/hooks/useCodeMirror'
 import { toast } from 'react-toastify'
 import { parse } from 'acorn'
 import { useThemeStore } from '@/store/themeStore'
-
 import ConsolePanel from './ConsolePanel'
-import { IconPlayerPlay, IconRun } from '@tabler/icons-react'
+import { IconPlayerPlay } from '@tabler/icons-react'
 import { useConsoleStore } from '@/store/consoleStore'
 import { evaluateCode } from '@/utils/evaluateCode'
 
@@ -124,75 +123,86 @@ export default function ResizablePanel() {
   }
 
   return (
-    <main
-      className={`flex h-screen w-screen flex-col p-[0.25rem] md:flex-row md:p-[0.75rem] gap-2 md:gap-1 ${
-        theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
-      }`}>
-      <animated.div
-        className={`relative h-1/2 w-full rounded-[7px] p-4 shadow-md md:h-full ${
-          theme === 'dark'
-            ? 'bg-gray-700 text-gray-100'
-            : 'bg-gray-100 text-gray-900'
+    <div className="w-[100vw] h-[100vh] flex flex-col">
+      <div
+        className={`h-[30px] ${
+          theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
         }`}
-        style={{
-          width: windowWidth > 768 ? props.width.to((w) => `${w}vw`) : '100%',
-        }}>
-        <div
-          ref={editorContainerRef}
-          className={`h-[500px] w-[98%] mt-3 mr-6  overflow-hidden text-[16px]  font-fira theme-${theme}`}
-        />{' '}
-        <IconWithHover
-          variant="upload"
-          className="absolute bottom-2 left-2"
-          onClick={triggerFileInput}
-        />
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileUpload}
-          accept=".js"
-          className="hidden"
-        />
-        <IconWithHover
-          variant="download"
-          className="absolute left-2 top-2"
-          onClick={handleDownload}
-        />
-        <IconWithHover className="absolute right-2 top-2" />
-        <button
-          className="absolute top-2 right-8 bg-green-500 hover:bg-green-600 text-white p-1 rounded-sm flex items-center gap-1"
-          onClick={() => {
-            const code = editorView?.state.doc.toString() || ''
-            if (code.trim().length === 0) return
-
-            const outputs = evaluateCode(code) // Execute
-            outputs.forEach((line) => addOutput(line)) // Display in console
+      ></div>
+      <main
+        className={`flex flex-1 w-screen overflow-hidden p-2 gap-[2px]  ${
+          theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
+        }`}
+      >
+        <animated.div
+          className={`relative h-full w-full rounded-[7px] p-4 shadow-md md:h-full ${
+            theme === 'dark'
+              ? 'bg-gray-700 text-gray-100'
+              : 'bg-gray-100 text-gray-900'
+          }`}
+          style={{
+            width: windowWidth > 768 ? props.width.to((w) => `${w}vw`) : '100%',
           }}
-          aria-label="Run code">
-          <IconPlayerPlay size={14} />
-          <span className="hidden md:inline text-[12px]">Run</span>
-        </button>
-        <IconWithHover className="absolute bottom-2 right-2" />
-      </animated.div>
-      <div
-        className="h-4 w-full md:h-full md:w-1 md:cursor-ew-resize hidden md:block"
-        onMouseDown={handleMouseDown}
-        role="separator"
-        aria-label="Resize panels"></div>
-      <div
-        className={`relative h-1/2 w-full rounded-[7px] p-4 shadow-md md:h-full md:flex-1 ${
-          theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
-        }`}>
-        <ConsolePanel />
-        <IconWithHover className="absolute left-2 top-2" />
-        <IconWithHover className="absolute right-2 top-2" />
-        <IconWithHover
-          variant={theme === 'light' ? 'moon' : 'sun'}
-          className="absolute bottom-2 left-2"
-          onClick={toggleTheme}
-        />
-        <IconWithHover className="absolute bottom-2 right-2" />
-      </div>
-    </main>
+        >
+          <div
+            ref={editorContainerRef}
+            className={`h-full overflow-hidden text-[16px] font-fira theme-${theme}`}
+          />
+          <IconWithHover
+            variant="upload"
+            className="absolute bottom-2 left-2"
+            onClick={triggerFileInput}
+          />
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".js"
+            className="hidden"
+          />
+          <IconWithHover
+            variant="download"
+            className="absolute left-2 top-2"
+            onClick={handleDownload}
+          />
+          <button
+            className="absolute top-2 right-2 bg-green-500 hover:bg-green-600 text-white p-1 rounded-sm flex items-center gap-1"
+            onClick={() => {
+              const code = editorView?.state.doc.toString() || ''
+              if (code.trim().length === 0) return
+
+              const outputs = evaluateCode(code) // Execute
+              outputs.forEach((line) => addOutput(line)) // Display in console
+            }}
+            aria-label="Run code"
+          >
+            <IconPlayerPlay size={14} />
+            <span className="hidden md:inline text-[12px]">Run</span>
+          </button>
+          <IconWithHover className="absolute bottom-2 right-2" />
+        </animated.div>
+        <div
+          className="h-4 w-full md:h-full md:w-1 md:cursor-ew-resize hidden md:block"
+          onMouseDown={handleMouseDown}
+          role="separator"
+          aria-label="Resize panels"
+        ></div>
+        <div
+          className={`relative h-full w-full rounded-[7px] p-4 shadow-md md:h-full md:flex-1 ${
+            theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+          }`}
+        >
+          <ConsolePanel />
+          <IconWithHover className="absolute left-2 top-2" />
+          <IconWithHover className="absolute right-2 top-2" />
+          <IconWithHover
+            variant={theme === 'light' ? 'moon' : 'sun'}
+            className="absolute bottom-2 left-2"
+            onClick={toggleTheme}
+          />
+          <IconWithHover className="absolute bottom-2 right-2" />
+        </div>
+      </main>
+    </div>
   )
 }

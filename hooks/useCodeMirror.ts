@@ -37,43 +37,16 @@ export function useCodeMirror(container: React.RefObject<HTMLDivElement>) {
           fontFeatureSettings: '"liga" 1',
           spellCheck: 'false',
           '-webkit-font-smoothing': 'antialiased',
-        },
-        '.cm-line': {
-          borderBottom: 'none !important',
-        },
-        '.cm-activeLine': {
-          borderBottom: 'none !important',
-          textDecoration: 'none !important',
-          background: 'none !important',
-        },
-        '.cm-focused .cm-activeLine': {
-          borderBottom: 'none !important',
-        },
-        '.cm-cursor': {
-          borderBottom: 'none !important',
-          borderLeft: '1px solid black',
-        },
-        '.cm-line::after, .cm-activeLine::after': {
-          display: 'none !important',
-          content: 'none !important',
-        },
+        }
       });
   
       // Custom setup excluding lineNumbers()
       const mySetup = [
         keymap.of([...defaultKeymap, ...historyKeymap]),
-        //highlightSpecialChars(),
         history(),
         drawSelection(),
         EditorState.allowMultipleSelections.of(true),
         indentOnInput(),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-        bracketMatching(),
-        closeBrackets(),
-        autocompletion(),
-        rectangularSelection(),
-        crosshairCursor(),
-        //highlightActiveLine(),
         highlightSelectionMatches(),
         lineNumbers(),
         

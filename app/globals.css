@@ -60,6 +60,14 @@
   background: #364153;
 }
 
+.cm-gutters {
+  border-right: none !important;
+}
+
+.cm-line {
+  font-family: var(--font-fira-code);
+}
+
 
 :root {
   --radius: 0.625rem;
