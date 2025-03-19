@@ -1,7 +1,6 @@
-// components/IconWithHover.tsx
-import { motion } from "framer-motion";
 import { IconCircleDotted, IconUpload, IconDownload, IconSun, IconMoon, IconPlayerPlay } from "@tabler/icons-react";
 import { useThemeStore } from "@/store/themeStore"; // Adjust the import path as needed
+import { useState } from "react";
 
 interface IconWithHoverProps {
   className?: string;
@@ -21,6 +20,9 @@ export default function IconWithHover({
   const initialBgColor = theme === "light" ? "#f3f4f6" : "#1e2939";
   const initialIconColor = theme === "light" ? "#000000" : "#ffffff";
 
+  // State to manage hover effect
+  const [isHovered, setIsHovered] = useState(false);
+
   // Determine the icon component based on the variant prop
   const IconComponent =
     variant === "upload"
@@ -36,11 +38,14 @@ export default function IconWithHover({
       : IconCircleDotted;
 
   return (
-    <motion.div
-      initial={{ backgroundColor: initialBgColor }}
-      whileHover={{ backgroundColor: "#000000", scale: 1.1 }}
-      transition={{ duration: 0.7 }}
-      className={`rounded-sm p-1 ${className}`}
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`rounded-sm p-1 transition-all duration-700 ease-in-out ${className}`}
+      style={{
+        backgroundColor: isHovered ? "#000000" : initialBgColor,
+        transform: isHovered ? "scale(1.1)" : "scale(1)",
+      }}
       role="button"
       aria-label={
         variant === "upload"
@@ -55,13 +60,14 @@ export default function IconWithHover({
       }
       onClick={onClick}
     >
-      <motion.div
-        initial={{ color: initialIconColor }}
-        whileHover={{ color: "#ffffff" }}
-        transition={{ duration: 0.7 }}
+      <div
+        className="transition-all duration-700 ease-in-out"
+        style={{
+          color: isHovered ? "#ffffff" : initialIconColor,
+        }}
       >
         <IconComponent size={14} />
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
