@@ -11,6 +11,7 @@ import { useThemeStore } from '@/store/themeStore'
 import ConsolePanel from './ConsolePanel'
 import { IconRun } from '@tabler/icons-react'
 import { useConsoleStore } from '@/store/consoleStore'
+import { evaluateCode } from '@/utils/evaluateCode'
 
 const MIN_WIDTH_VW = 24
 const MAX_WIDTH_VW = 70
@@ -22,7 +23,7 @@ export default function ResizablePanel() {
   const { editorView } = useCodeMirror(editorContainerRef)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { theme, toggleTheme } = useThemeStore()
-  const { addOutput } = useConsoleStore();
+  const { addOutput } = useConsoleStore()
 
   const [props, api] = useSpring(() => ({
     width: INITIAL_WIDTH_VW,
@@ -161,9 +162,11 @@ export default function ResizablePanel() {
         <button
           className="absolute top-2 right-8 bg-green-500 hover:bg-green-600 text-white p-1 rounded-sm flex items-center gap-1"
           onClick={() => {
-            const content = editorView?.state.doc.toString() || ''
-            if (content.trim().length === 0) return
-            addOutput(content)
+            const code = editorView?.state.doc.toString() || ''
+            if (code.trim().length === 0) return
+
+            const outputs = evaluateCode(code) // Execute
+            outputs.forEach((line) => addOutput(line)) // Display in console
           }}
           aria-label="Run code">
           <IconRun size={14} />

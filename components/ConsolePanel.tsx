@@ -11,7 +11,7 @@ function ConsolePanel() {
 
   return (
     <div
-      className={`h-full w-full overflow-y-auto rounded-[7px] p-4 shadow-md text-sm md:text-[14px] ${firaCode.className}`}
+      className={`h-full w-full overflow-y-auto rounded-[7px] p-4 text-[16px]  ${firaCode.className}`}
       role="log"
       aria-live="polite"
       aria-label="Console output"
@@ -20,7 +20,7 @@ function ConsolePanel() {
         <div className="text-gray-500 italic">Console output will appear here...</div>
       ) : (
         output.map((line, index) => (
-          <div key={index} className="text-[13px] mb-1">
+          <div key={index} className="text-[16px] mb-1">
             {line}
           </div>
         ))
