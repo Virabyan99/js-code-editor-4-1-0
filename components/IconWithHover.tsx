@@ -1,11 +1,11 @@
 // components/IconWithHover.tsx
 import { motion } from "framer-motion";
-import { IconCircleDotted, IconUpload, IconDownload, IconSun, IconMoon } from "@tabler/icons-react";
+import { IconCircleDotted, IconUpload, IconDownload, IconSun, IconMoon, IconPlayerPlay } from "@tabler/icons-react";
 import { useThemeStore } from "@/store/themeStore"; // Adjust the import path as needed
 
 interface IconWithHoverProps {
   className?: string;
-  variant?: "circle" | "upload" | "download" | "sun" | "moon";
+  variant?: "circle" | "upload" | "download" | "sun" | "moon" | "run";
   onClick?: () => void;
 }
 
@@ -18,7 +18,7 @@ export default function IconWithHover({
   const { theme } = useThemeStore();
 
   // Set initial colors based on the theme
-  const initialBgColor = theme === "light" ? "#f3f4f6" : "#364153";
+  const initialBgColor = theme === "light" ? "#f3f4f6" : "#1e2939";
   const initialIconColor = theme === "light" ? "#000000" : "#ffffff";
 
   // Determine the icon component based on the variant prop
@@ -31,6 +31,8 @@ export default function IconWithHover({
       ? IconSun
       : variant === "moon"
       ? IconMoon
+      : variant === "run"
+      ? IconPlayerPlay
       : IconCircleDotted;
 
   return (
@@ -47,6 +49,8 @@ export default function IconWithHover({
           ? "Download code"
           : variant === "sun" || variant === "moon"
           ? "Toggle theme"
+          : variant === "run"
+          ? "Run code"
           : "Interactive icon"
       }
       onClick={onClick}

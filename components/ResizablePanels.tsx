@@ -8,7 +8,6 @@ import { toast } from 'react-toastify'
 import { parse } from 'acorn'
 import { useThemeStore } from '@/store/themeStore'
 import ConsolePanel from './ConsolePanel'
-import { IconPlayerPlay } from '@tabler/icons-react'
 import { useConsoleStore } from '@/store/consoleStore'
 import { evaluateCode } from '@/utils/evaluateCode'
 
@@ -122,15 +121,54 @@ export default function ResizablePanel() {
     URL.revokeObjectURL(url)
   }
 
+  const handleRunCode = () => {
+    const code = editorView?.state.doc.toString() || ''
+    if (code.trim().length === 0) return
+
+    const outputs = evaluateCode(code) // Execute
+    outputs.forEach((line) => addOutput(line)) // Display in console
+  }
+
   return (
     <div className="w-[100vw] h-[100vh] flex flex-col">
       <div
-        className={`h-[30px] ${
+        className={`h-[35px] flex flex-row items-center pl-10 gap-2 ${
           theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
         }`}
-      ></div>
+      >
+        <IconWithHover
+          variant="run"
+          onClick={handleRunCode}
+          className='w-fit h-fit flex items-center '
+        />
+        <IconWithHover
+          variant="upload"
+          className="flex items-center w-fit h-fit"
+          onClick={triggerFileInput}
+        />
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          accept=".js"
+          className="hidden"
+        />
+        <IconWithHover
+          variant="download"
+          className="flex items-center w-fit h-fit"
+          onClick={handleDownload}
+        />
+        
+          <IconWithHover
+            variant={theme === 'light' ? 'moon' : 'sun'}
+            className="flex items-center w-fit h-fit"
+            onClick={toggleTheme}
+          />
+        
+        {/* Removed misplaced absolute positioned IconWithHover */}
+      </div>
       <main
-        className={`flex flex-1 w-screen overflow-hidden p-2 gap-[2px]  ${
+        className={`flex flex-1 w-screen overflow-hidden px-2 pb-2 gap-[2px] ${
           theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
         }`}
       >
@@ -148,38 +186,6 @@ export default function ResizablePanel() {
             ref={editorContainerRef}
             className={`h-full overflow-hidden text-[16px] font-fira theme-${theme}`}
           />
-          <IconWithHover
-            variant="upload"
-            className="absolute bottom-2 left-2"
-            onClick={triggerFileInput}
-          />
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept=".js"
-            className="hidden"
-          />
-          <IconWithHover
-            variant="download"
-            className="absolute left-2 top-2"
-            onClick={handleDownload}
-          />
-          <button
-            className="absolute top-2 right-2 bg-green-500 hover:bg-green-600 text-white p-1 rounded-sm flex items-center gap-1"
-            onClick={() => {
-              const code = editorView?.state.doc.toString() || ''
-              if (code.trim().length === 0) return
-
-              const outputs = evaluateCode(code) // Execute
-              outputs.forEach((line) => addOutput(line)) // Display in console
-            }}
-            aria-label="Run code"
-          >
-            <IconPlayerPlay size={14} />
-            <span className="hidden md:inline text-[12px]">Run</span>
-          </button>
-          <IconWithHover className="absolute bottom-2 right-2" />
         </animated.div>
         <div
           className="h-4 w-full md:h-full md:w-1 md:cursor-ew-resize hidden md:block"
@@ -193,14 +199,7 @@ export default function ResizablePanel() {
           }`}
         >
           <ConsolePanel />
-          <IconWithHover className="absolute left-2 top-2" />
-          <IconWithHover className="absolute right-2 top-2" />
-          <IconWithHover
-            variant={theme === 'light' ? 'moon' : 'sun'}
-            className="absolute bottom-2 left-2"
-            onClick={toggleTheme}
-          />
-          <IconWithHover className="absolute bottom-2 right-2" />
+         
         </div>
       </main>
     </div>
