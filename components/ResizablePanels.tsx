@@ -9,7 +9,7 @@ import { parse } from 'acorn'
 import { useThemeStore } from '@/store/themeStore'
 
 import ConsolePanel from './ConsolePanel'
-import { IconRun } from '@tabler/icons-react'
+import { IconPlayerPlay, IconRun } from '@tabler/icons-react'
 import { useConsoleStore } from '@/store/consoleStore'
 import { evaluateCode } from '@/utils/evaluateCode'
 
@@ -169,7 +169,7 @@ export default function ResizablePanel() {
             outputs.forEach((line) => addOutput(line)) // Display in console
           }}
           aria-label="Run code">
-          <IconRun size={14} />
+          <IconPlayerPlay size={14} />
           <span className="hidden md:inline text-[12px]">Run</span>
         </button>
         <IconWithHover className="absolute bottom-2 right-2" />
