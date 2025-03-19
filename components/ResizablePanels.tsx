@@ -7,6 +7,8 @@ import { useCodeMirror } from '@/hooks/useCodeMirror'
 import { toast } from 'react-toastify'
 import { parse } from 'acorn'
 import { useThemeStore } from '@/store/themeStore'
+import { Console } from 'console'
+import ConsolePanel from './ConsolePanel'
 
 const MIN_WIDTH_VW = 24
 const MAX_WIDTH_VW = 70
@@ -164,7 +166,7 @@ export default function ResizablePanel() {
         className={`relative h-1/2 w-full rounded-[7px] p-4 shadow-md md:h-full md:flex-1 ${
           theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
         }`}>
-        <h2 className="ml-7">Right Panel</h2>
+        <ConsolePanel />
         <IconWithHover className="absolute left-2 top-2" />
         <IconWithHover className="absolute right-2 top-2" />
         <IconWithHover
