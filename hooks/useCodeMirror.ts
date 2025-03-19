@@ -3,23 +3,19 @@ import {
   EditorView,
   placeholder,
   keymap,
-  highlightSpecialChars,
   drawSelection,
-  highlightActiveLine,
   rectangularSelection,
   crosshairCursor,
   lineNumbers,
-  highlightActiveLineGutter,
-  highlightWhitespace,
+
 } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
-import { defaultKeymap, historyKeymap, history, lineUncomment, selectLineEnd, selectLine, selectCharLeft } from '@codemirror/commands'
+import { defaultKeymap, historyKeymap, history } from '@codemirror/commands'
 import {
   indentOnInput,
   bracketMatching,
   syntaxHighlighting,
   defaultHighlightStyle,
-  highlightingFor,
 } from '@codemirror/language'
 import { autocompletion, closeBrackets } from '@codemirror/autocomplete'
 import { highlightSelectionMatches } from '@codemirror/search'

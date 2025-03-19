@@ -1,6 +1,7 @@
 // components/IconWithHover.tsx
 import { motion } from "framer-motion";
 import { IconCircleDotted, IconUpload, IconDownload, IconSun, IconMoon } from "@tabler/icons-react";
+import { useThemeStore } from "@/store/themeStore"; // Adjust the import path as needed
 
 interface IconWithHoverProps {
   className?: string;
@@ -13,6 +14,14 @@ export default function IconWithHover({
   variant = "circle",
   onClick,
 }: IconWithHoverProps) {
+  // Get the current theme from the theme store
+  const { theme } = useThemeStore();
+
+  // Set initial colors based on the theme
+  const initialBgColor = theme === "light" ? "#f3f4f6" : "#364153";
+  const initialIconColor = theme === "light" ? "#000000" : "#ffffff";
+
+  // Determine the icon component based on the variant prop
   const IconComponent =
     variant === "upload"
       ? IconUpload
@@ -26,8 +35,8 @@ export default function IconWithHover({
 
   return (
     <motion.div
-      initial={{ backgroundColor: "#f3f4f6" }}
-      whileHover={{ backgroundColor: "#000000", scale: 1.1,  }}
+      initial={{ backgroundColor: initialBgColor }}
+      whileHover={{ backgroundColor: "#000000", scale: 1.1 }}
       transition={{ duration: 0.7 }}
       className={`rounded-sm p-1 ${className}`}
       role="button"
@@ -43,7 +52,7 @@ export default function IconWithHover({
       onClick={onClick}
     >
       <motion.div
-        initial={{ color: "#000000" }}
+        initial={{ color: initialIconColor }}
         whileHover={{ color: "#ffffff" }}
         transition={{ duration: 0.7 }}
       >

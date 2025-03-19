@@ -43,6 +43,24 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+.cm-content {
+  height: 100%;
+}
+
+.cm-editor {
+  height: 100%;
+  border: none;
+}
+
+.theme-light .cm-gutter {
+  background: #f3f4f6;
+}
+
+.theme-dark .cm-gutter {
+  background: #364153;
+}
+
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -77,6 +95,7 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
 }
+
 
 
 .dark {
