@@ -7,8 +7,10 @@ import { useCodeMirror } from '@/hooks/useCodeMirror'
 import { toast } from 'react-toastify'
 import { parse } from 'acorn'
 import { useThemeStore } from '@/store/themeStore'
-import { Console } from 'console'
+
 import ConsolePanel from './ConsolePanel'
+import { IconRun } from '@tabler/icons-react'
+import { useConsoleStore } from '@/store/consoleStore'
 
 const MIN_WIDTH_VW = 24
 const MAX_WIDTH_VW = 70
@@ -20,6 +22,7 @@ export default function ResizablePanel() {
   const { editorView } = useCodeMirror(editorContainerRef)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { theme, toggleTheme } = useThemeStore()
+  const { addOutput } = useConsoleStore();
 
   const [props, api] = useSpring(() => ({
     width: INITIAL_WIDTH_VW,
@@ -155,6 +158,17 @@ export default function ResizablePanel() {
           onClick={handleDownload}
         />
         <IconWithHover className="absolute right-2 top-2" />
+        <button
+          className="absolute top-2 right-8 bg-green-500 hover:bg-green-600 text-white p-1 rounded-sm flex items-center gap-1"
+          onClick={() => {
+            const content = editorView?.state.doc.toString() || ''
+            if (content.trim().length === 0) return
+            addOutput(content)
+          }}
+          aria-label="Run code">
+          <IconRun size={14} />
+          <span className="hidden md:inline text-[12px]">Run</span>
+        </button>
         <IconWithHover className="absolute bottom-2 right-2" />
       </animated.div>
       <div
