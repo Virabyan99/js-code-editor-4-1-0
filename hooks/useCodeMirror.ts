@@ -4,8 +4,6 @@ import {
   placeholder,
   keymap,
   drawSelection,
-  rectangularSelection,
-  crosshairCursor,
   lineNumbers,
 
 } from '@codemirror/view'
@@ -13,9 +11,6 @@ import { EditorState } from '@codemirror/state'
 import { defaultKeymap, historyKeymap, history } from '@codemirror/commands'
 import {
   indentOnInput,
-  bracketMatching,
-  syntaxHighlighting,
-  defaultHighlightStyle,
 } from '@codemirror/language'
 import { autocompletion, closeBrackets } from '@codemirror/autocomplete'
 import { highlightSelectionMatches } from '@codemirror/search'

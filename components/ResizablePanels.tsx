@@ -132,8 +132,8 @@ export default function ResizablePanel() {
   return (
     <div className="w-[100vw] h-[100vh] flex flex-col">
       <div
-        className={`h-[35px] flex flex-row items-center pl-10 gap-2 ${
-          theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
+        className={`h-[35px] flex flex-row items-center pl-10 gap-2 shadow-xl ${
+          theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100   text-black'
         }`}
       >
         <IconWithHover
@@ -168,7 +168,7 @@ export default function ResizablePanel() {
         {/* Removed misplaced absolute positioned IconWithHover */}
       </div>
       <main
-        className={`flex flex-1 w-screen overflow-hidden px-2 pb-2 gap-[2px] ${
+        className={`flex flex-1 w-screen overflow-hidden  ${
           theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
         }`}
       >
@@ -188,7 +188,7 @@ export default function ResizablePanel() {
           />
         </animated.div>
         <div
-          className="h-4 w-full md:h-full md:w-1 md:cursor-ew-resize hidden md:block"
+          className="h-4 w-full md:h-full md:w-1 rounded-2xl bg-gray-300 md:cursor-ew-resize hidden md:block"
           onMouseDown={handleMouseDown}
           role="separator"
           aria-label="Resize panels"
