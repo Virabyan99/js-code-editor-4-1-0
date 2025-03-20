@@ -1,59 +1,59 @@
-// components/ConsolePanel.tsx
-import { useConsoleStore } from "@/store/consoleStore";
-import { Fira_Code } from "next/font/google";
-import { memo, useEffect, useRef } from "react";
-
-// Import Fira Code font
-const firaCode = Fira_Code({ subsets: ["latin"], weight: ["400", "700"] });
+import { useConsoleStore } from '@/store/consoleStore';
+import { useEffect, useRef } from 'react';
 
 function ConsolePanel() {
-  const { output, addOutput } = useConsoleStore();
+  const { output, addOutput } = useConsoleStore(); // Store for console messages
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Listen for messages from the sandbox iframe
+  // Set up message listener
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      // 1) Validate the origin
-      if (event.origin !== window.location.origin) {
-        // If the message didn’t come from our own site, ignore it.
-        return;
-      }
-    
-      // 2) Check if the data is what we expect (an array of strings)
-      if (Array.isArray(event.data)) {
-        event.data.forEach((msg) => addOutput(msg));
+      // Check if the message comes from the iframe's contentWindow
+      if (event.source !== iframeRef.current?.contentWindow) return;
+
+      console.log("Message received from iframe:", event.data); // Debug log
+
+      const data = event.data;
+      if (Array.isArray(data)) {
+        // Add each message to the console store
+        data.forEach((msgObj) => {
+          if (msgObj && msgObj.type && msgObj.text) {
+            addOutput(msgObj);
+          }
+        });
       }
     }
 
-    window.addEventListener("message", handleMessage);
-
-    // Cleanup listener on unmount
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, [addOutput]);
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [addOutput, iframeRef]);
 
   return (
-    <div
-      className={`h-full w-full overflow-y-auto rounded-[7px] p-4 text-[16px] ${firaCode.className}`}
-      role="log"
-      aria-live="polite"
-      aria-label="Console output"
-    >
-      {/* Hidden iframe for sandboxed code execution */}
+    <div>
+      {/* Hidden iframe */}
       <iframe
         ref={iframeRef}
         src="/sandbox.html"
         sandbox="allow-scripts"
-        style={{ display: "none" }}
+        style={{ display: 'none' }}
         title="Sandboxed Code Execution"
       />
+      {/* Console output display */}
       {output.length === 0 ? (
-        <div className="text-gray-500 italic">Console output will appear here...</div>
+        <div className="text-gray-500">Console output will appear here...</div>
       ) : (
-        output.map((line, index) => (
-          <div key={index} className="text-[16px] mb-1">
-            {line}
+        output.map((msg, index) => (
+          <div
+            key={index}
+            className={`text-[16px] mb-1 ${
+              msg.type === 'error'
+                ? 'text-red-600'
+                : msg.type === 'warn'
+                ? 'text-yellow-600'
+                : 'text-gray-800'
+            }`}
+          >
+            {msg.text}
           </div>
         ))
       )}
@@ -61,4 +61,4 @@ function ConsolePanel() {
   );
 }
 
-export default memo(ConsolePanel);
+export default ConsolePanel;

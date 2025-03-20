@@ -1,10 +1,16 @@
 import { create } from "zustand";
 
-// Define the Console State interface
+// Define the message object structure
+interface ConsoleMessage {
+  type: "log" | "warn" | "error";
+  text: string;
+}
+
+// Define the console state interface
 interface ConsoleState {
-  output: string[];                         // Holds all console messages
-  addOutput: (message: string) => void;     // Adds a new message
-  clearOutput: () => void;                  // Clears all output (future-proofing)
+  output: ConsoleMessage[];
+  addOutput: (message: ConsoleMessage) => void;
+  clearOutput: () => void;
 }
 
 // Create Zustand store

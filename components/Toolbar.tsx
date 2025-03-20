@@ -20,6 +20,7 @@ export default function Toolbar() {
     const sandboxIframe = document.querySelector(
       'iframe[title="Sandboxed Code Execution"]'
     ) as HTMLIFrameElement | null;
+    console.log("Iframe found:", sandboxIframe); // Debug log
     if (sandboxIframe) {
       setIframeRef(sandboxIframe);
     }
@@ -77,6 +78,7 @@ export default function Toolbar() {
 
   const handleRunCode = () => {
     if (content.trim().length === 0) return;
+    console.log("Sending code to iframe:", content, "Iframe ref:", iframeRef); // Debug log
     if (iframeRef && iframeRef.contentWindow) {
       iframeRef.contentWindow.postMessage(content, "*");
     }
