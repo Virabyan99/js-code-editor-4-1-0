@@ -13,9 +13,15 @@ function ConsolePanel() {
   // Listen for messages from the sandbox iframe
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      // Check if the data is an array (output from sandbox.html)
+      // 1) Validate the origin
+      if (event.origin !== window.location.origin) {
+        // If the message didn’t come from our own site, ignore it.
+        return;
+      }
+    
+      // 2) Check if the data is what we expect (an array of strings)
       if (Array.isArray(event.data)) {
-        event.data.forEach((msg: string) => addOutput(msg));
+        event.data.forEach((msg) => addOutput(msg));
       }
     }
 
