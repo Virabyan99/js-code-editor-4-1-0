@@ -39,11 +39,15 @@ export default function IconWithHover({
 
   return (
     <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => {
+        if (variant !== "run") setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        if (variant !== "run") setIsHovered(false);
+      }}
       className={`rounded-sm transition-all duration-700 ease-in-out ${
         variant === "run"
-          ? `pr-1 `
+          ? `px-1 border  ${theme === "light" ? "border-gray-300" : "border-gray-700"} cursor-pointer`
           : "p-1"
       } ${className}`}
       style={{
@@ -67,11 +71,11 @@ export default function IconWithHover({
       <div
         className="transition-all duration-700 ease-in-out flex items-center"
         style={{
-          color: isHovered ? "#f3f4f6" : initialIconColor, // Fixed extra space in original code
+          color: isHovered ? "#f3f4f6" : initialIconColor,
         }}
       >
         <IconComponent size={14} />
-        {variant === "run" && <span className="ml-1">Run</span>} {/* Fixed extra space in original code */}
+        {variant === "run" && <span className="ml-1">Run</span>}
       </div>
     </div>
   );
