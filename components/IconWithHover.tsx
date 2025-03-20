@@ -75,7 +75,7 @@ export default function IconWithHover({
         }}
       >
         <IconComponent size={14} />
-        {variant === "run" && <span className="ml-1">Run</span>}
+        {variant === "run" && <span className="ml-1 firafont">Run</span>}
       </div>
     </div>
   );

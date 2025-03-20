@@ -110,6 +110,10 @@
   margin: 8px;
 }
 
+.fontfont {
+  font-family: var(--font-fira);
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

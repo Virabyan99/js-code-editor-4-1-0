@@ -74,6 +74,13 @@ export default function ResizablePanel() {
               : '100%',
         }}
       >
+        <div className={`absolute w-2 h-2  z-20 bottom-4 right-4 ${
+          theme === 'dark'
+            ? 'bg-gray-700 '
+            : 'bg-gray-100'
+        }`}>
+
+        </div>
         <div
           ref={editorContainerRef}
           className={`h-full overflow-hidden text-[16px] font-fira theme-${theme}`}
