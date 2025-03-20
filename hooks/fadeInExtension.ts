@@ -1,12 +1,12 @@
 import { StateEffect, StateField } from "@codemirror/state";
-import { Decoration, DecorationSet, EditorView } from "@codemirror/view";
+import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
 
-// Define the effect to mark text for animation
+// Fade-in effect definition (unchanged)
 export const addFadeIn = StateEffect.define<{ from: number; to: number }>({
   map: ({ from, to }, change) => ({ from: change.mapPos(from), to: change.mapPos(to) }),
 });
 
-// Define the state field to manage animated decorations
+// Fade-in state field (unchanged)
 export const fadeInField = StateField.define<DecorationSet>({
   create() {
     return Decoration.none;
@@ -29,25 +29,48 @@ export const fadeInField = StateField.define<DecorationSet>({
   provide: (field) => EditorView.decorations.from(field),
 });
 
-// CSS for the fade-in and flying animations
-export const fadeInTheme = EditorView.theme({
+// Editor theme with effects (unchanged)
+export const editorTheme = EditorView.theme({
   ".cm-fade-in": {
-    animation: "fadeIn 1.2s ease-in, flyIn 0.3s ease-out",
+    animation: "fadeIn 0.8s ease-in-out",
   },
   "@keyframes fadeIn": {
-    from: { opacity: "0.6" },
+    from: { opacity: "0" },
     to: { opacity: "1" },
   },
-  "@keyframes flyIn": {
-    from: { transform: "translateY(-10px)" },
-    to: { transform: "translateY(0)" },
+  ".cm-editor .cm-cursor": {
+    animation: "pulse 0.5s ease-out",
   },
-  // Optionally, keep the highlight animation if you like it
-  "@keyframes highlight": {
-    from: { "background-color": "rgba(255, 255, 0, 0.3)" },
-    to: { "background-color": "transparent" },
+  "@keyframes pulse": {
+    "0%": { opacity: "0.3", transform: "scale(1.5)" },
+    "100%": { opacity: "1", transform: "scale(1)" },
+  },
+  ".cm-editor .cm-content": {
+    textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
   },
 });
 
-// Combine into a single extension array
-export const fadeInExtension = [fadeInField, fadeInTheme];
+// Cursor pulse plugin (updated)
+export const pulseOnType = ViewPlugin.fromClass(
+  class {
+    view: EditorView;
+    constructor(view: EditorView) {
+      this.view = view;
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged) {
+        console.log("Pulse triggered");
+        const cursors = this.view.dom.querySelectorAll(".cm-cursor");
+        cursors.forEach((cursor) => {
+          const htmlCursor = cursor as HTMLElement;
+          htmlCursor.style.animation = "none";
+          htmlCursor.offsetHeight; // Force reflow
+          htmlCursor.style.animation = "pulse 0.5s ease-out";
+        });
+      }
+    }
+  }
+);
+
+// Export all extensions (unchanged)
+export const fadeInExtension = [fadeInField, editorTheme, pulseOnType];
