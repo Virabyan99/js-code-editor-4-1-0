@@ -16,9 +16,9 @@ export default function IconWithHover({
   // Get the current theme from the theme store
   const { theme } = useThemeStore();
 
-  // Set initial colors based on the theme
+  // Set initial colors based on the theme (same for all variants)
   const initialBgColor = theme === "light" ? "#f3f4f6" : "#1e2939";
-  const initialIconColor = theme === "light" ? "#000000" : "#ffffff";
+  const initialIconColor = theme === "light" ? "#000000" : "#f3f4f6";
 
   // State to manage hover effect
   const [isHovered, setIsHovered] = useState(false);
@@ -41,7 +41,11 @@ export default function IconWithHover({
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`rounded-sm p-1 transition-all duration-700 ease-in-out ${className}`}
+      className={`rounded-sm transition-all duration-700 ease-in-out ${
+        variant === "run"
+          ? `pr-1 `
+          : "p-1"
+      } ${className}`}
       style={{
         backgroundColor: isHovered ? "#000000" : initialBgColor,
         transform: isHovered ? "scale(1.1)" : "scale(1)",
@@ -61,12 +65,13 @@ export default function IconWithHover({
       onClick={onClick}
     >
       <div
-        className="transition-all duration-700 ease-in-out"
+        className="transition-all duration-700 ease-in-out flex items-center"
         style={{
-          color: isHovered ? "#ffffff" : initialIconColor,
+          color: isHovered ? "#f3f4f6" : initialIconColor, // Fixed extra space in original code
         }}
       >
         <IconComponent size={14} />
+        {variant === "run" && <span className="ml-1">Run</span>} {/* Fixed extra space in original code */}
       </div>
     </div>
   );

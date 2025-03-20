@@ -188,7 +188,7 @@ export default function ResizablePanel() {
           />
         </animated.div>
         <div
-          className={`h-4 w-full md:h-full md:w-1 rounded-2xl md:cursor-ew-resize hidden md:block ${
+          className={`h-4 w-full md:h-full md:w-[2px] rounded-2xl md:cursor-ew-resize hidden md:block ${
             theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
           }`}
           onMouseDown={handleMouseDown}
