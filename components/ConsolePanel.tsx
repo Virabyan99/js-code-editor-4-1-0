@@ -17,7 +17,7 @@ function ConsolePanel() {
       aria-label="Console output"
     >
       {output.length === 0 ? (
-        <div className="text-gray-500 italic">Console output will appear here...</div>
+        <div className="text-gray-500  italic">Console output will appear here...</div>
       ) : (
         output.map((line, index) => (
           <div key={index} className="text-[16px] mb-1">

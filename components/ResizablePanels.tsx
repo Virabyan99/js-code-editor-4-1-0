@@ -133,10 +133,10 @@ export default function ResizablePanel() {
     <div className="w-[100vw] h-[100vh] flex flex-col">
       <div
         className={`h-[35px] flex flex-row items-center shadow-2xl pl-10 gap-2 shadow-xl ${
-          theme === 'dark' ? 'bg-gray-800  text-white' : 'bg-gray-100 border-b-2 border-gray-200  text-black'
-        }`}
-      >
-        
+          theme === 'dark'
+            ? 'bg-gray-800  text-white'
+            : 'bg-gray-100 border-b-2 border-gray-200  text-black'
+        }`}>
         <IconWithHover
           variant="upload"
           className="flex items-center w-fit h-fit"
@@ -154,24 +154,22 @@ export default function ResizablePanel() {
           className="flex items-center w-fit h-fit"
           onClick={handleDownload}
         />
-        
-          <IconWithHover
-            variant={theme === 'light' ? 'moon' : 'sun'}
-            className="flex items-center w-fit h-fit"
-            onClick={toggleTheme}
-          />
-          <IconWithHover
+
+        <IconWithHover
+          variant={theme === 'light' ? 'moon' : 'sun'}
+          className="flex items-center w-fit h-fit"
+          onClick={toggleTheme}
+        />
+        <IconWithHover
           variant="run"
           onClick={handleRunCode}
-          className='w-fit h-fit flex items-center  lg:ml-[420px]'
+          className="w-fit h-fit flex items-center  lg:ml-[420px]"
         />
-        
       </div>
       <main
-        className={`flex flex-1 w-screen overflow-hidden  ${
+        className={`flex flex-1 w-screen overflow-hidden ${
           theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
-        }`}
-      >
+        }`}>
         <animated.div
           className={`relative h-full w-full rounded-[7px] p-4 shadow-md md:h-full ${
             theme === 'dark'
@@ -179,9 +177,11 @@ export default function ResizablePanel() {
               : 'bg-gray-100 text-gray-900'
           }`}
           style={{
-            width: windowWidth > 768 ? props.width.to((w) => `${w}vw`) : '100%',
-          }}
-        >
+            width:
+              windowWidth > 768 || windowWidth === 0
+                ? props.width.to((w) => `${w}vw`)
+                : '100%',
+          }}>
           <div
             ref={editorContainerRef}
             className={`h-full overflow-hidden text-[16px] font-fira theme-${theme}`}
@@ -190,18 +190,15 @@ export default function ResizablePanel() {
         <div
           className={`h-4 w-full md:h-full md:w-1 rounded-2xl md:cursor-ew-resize hidden md:block ${
             theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
-          } `}
+          }`}
           onMouseDown={handleMouseDown}
           role="separator"
-          aria-label="Resize panels"
-        ></div>
+          aria-label="Resize panels"></div>
         <div
           className={`relative h-full w-full rounded-[7px] p-4 shadow-md md:h-full md:flex-1 ${
             theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
-          }`}
-        >
+          }`}>
           <ConsolePanel />
-         
         </div>
       </main>
     </div>

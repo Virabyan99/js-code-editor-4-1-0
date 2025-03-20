@@ -85,6 +85,11 @@
   border-radius: 4px;
 }
 
+.theme-light .cm-scroller::-webkit-scrollbar-thumb {
+  background-color: #d1d5dc;
+  border-radius: 4px;
+}
+
 /* Theme-specific scrollbar track styles */
 .theme-light .cm-scroller::-webkit-scrollbar-track {
   background-color: #f3f4f6;
