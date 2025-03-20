@@ -1,19 +1,29 @@
 "use client";
 // components/Toolbar.tsx
-import { useRef } from 'react';
-import IconWithHover from './IconWithHover';
-import { useThemeStore } from '@/store/themeStore';
-import { useEditorStore } from '@/store/editorStore';
-import { useConsoleStore } from '@/store/consoleStore';
-import { toast } from 'react-toastify';
-import { parse } from 'acorn';
-import { evaluateCode } from '@/utils/evaluateCode';
+import { useRef, useState, useEffect } from "react";
+import IconWithHover from "./IconWithHover";
+import { useThemeStore } from "@/store/themeStore";
+import { useEditorStore } from "@/store/editorStore";
+import { useConsoleStore } from "@/store/consoleStore";
+import { toast } from "react-toastify";
+import { parse } from "acorn";
 
 export default function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useThemeStore();
   const { content, setContent } = useEditorStore();
   const { addOutput } = useConsoleStore();
+  const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
+
+  // Get a reference to the sandbox iframe
+  useEffect(() => {
+    const sandboxIframe = document.querySelector(
+      'iframe[title="Sandboxed Code Execution"]'
+    ) as HTMLIFrameElement | null;
+    if (sandboxIframe) {
+      setIframeRef(sandboxIframe);
+    }
+  }, []);
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
@@ -24,12 +34,12 @@ export default function Toolbar() {
     if (!file) return;
 
     if (file.size > 1024 * 1024) {
-      toast.error('File size exceeds 1MB');
+      toast.error("File size exceeds 1MB");
       return;
     }
 
-    if (!file.name.endsWith('.js')) {
-      toast.error('Only .js files are allowed');
+    if (!file.name.endsWith(".js")) {
+      toast.error("Only .js files are allowed");
       return;
     }
 
@@ -37,10 +47,10 @@ export default function Toolbar() {
     reader.onload = (event) => {
       const fileContent = event.target?.result as string;
       try {
-        parse(fileContent, { ecmaVersion: 'latest' });
-        setContent(fileContent); // Update content in editorStore
+        parse(fileContent, { ecmaVersion: "latest" });
+        setContent(fileContent);
       } catch (error) {
-        toast.error('Invalid JavaScript file');
+        toast.error("Invalid JavaScript file");
       }
     };
     reader.readAsText(file);
@@ -48,15 +58,15 @@ export default function Toolbar() {
 
   const handleDownload = () => {
     if (content.length === 0) {
-      toast.error('Editor is empty');
+      toast.error("Editor is empty");
       return;
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `${timestamp}.js`;
-    const blob = new Blob([content], { type: 'text/javascript' });
+    const blob = new Blob([content], { type: "text/javascript" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = filename;
     document.body.appendChild(link);
@@ -67,16 +77,17 @@ export default function Toolbar() {
 
   const handleRunCode = () => {
     if (content.trim().length === 0) return;
-    const outputs = evaluateCode(content);
-    outputs.forEach((line) => addOutput(line));
+    if (iframeRef && iframeRef.contentWindow) {
+      iframeRef.contentWindow.postMessage(content, "*");
+    }
   };
 
   return (
     <div
-      className={`h-[35px] flex flex-row items-center z-50  shadow-xl pl-10 gap-2 shadow-xl ${
-        theme === 'dark'
-          ? 'bg-gray-800 text-white'
-          : 'bg-gray-100 border-b-2 border-gray-200 text-black'
+      className={`h-[35px] flex flex-row items-center z-50 shadow-xl pl-10 gap-2 shadow-xl ${
+        theme === "dark"
+          ? "bg-gray-800 text-white"
+          : "bg-gray-100 border-b-2 border-gray-200 text-black"
       }`}
     >
       <IconWithHover
@@ -97,7 +108,7 @@ export default function Toolbar() {
         onClick={handleDownload}
       />
       <IconWithHover
-        variant={theme === 'light' ? 'moon' : 'sun'}
+        variant={theme === "light" ? "moon" : "sun"}
         className="flex items-center w-fit h-fit"
         onClick={toggleTheme}
       />

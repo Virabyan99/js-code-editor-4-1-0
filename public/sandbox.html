@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sandbox Iframe</title>
+</head>
+<body>
+  <!-- We keep the iframe body empty; all logic is in the script below. -->
+  <script>
+    // 1) Listen for messages from the parent window.
+    window.addEventListener('message', (event) => {
+      // Optionally, we can validate the event.origin here if we want to allow only specific origins.
+      
+      // 2) Extract the code to run from event.data.
+      const codeToRun = event.data;
+
+      // 3) We'll store our output messages here before sending them back.
+      let messages = [];
+
+      // 4) We'll temporarily override console.log inside this sandbox
+      //    just so we capture outputs. This is *very* basic for now;
+      //    we'll improve it in future lessons.
+      const originalLog = console.log;
+      console.log = (...args) => {
+        messages.push(args.join(' '));
+        originalLog(...args);
+      };
+
+      try {
+        // 5) Safely build a function from the code string.
+        //    We avoid eval to reduce risk, though "new Function" is not 100% safe.
+        //    Because we're in a sandbox, it's safer than letting it run in the main app.
+        const runnable = new Function(codeToRun);
+
+        // 6) Execute the function, capturing any returned value.
+        const result = runnable();
+        
+        // 7) If the function returns something, push it to our messages array.
+        if (result !== undefined) {
+          messages.push(String(result));
+        }
+
+      } catch (err) {
+        // 8) In case of errors, let's capture them as well.
+        messages.push(`Error: ${err.message}`);
+      }
+
+      // 9) Restore the original console.log
+      console.log = originalLog;
+
+      // 10) Send the output messages back to the parent.
+      //     The parent will listen for the 'message' event and put them in the console.
+      window.parent.postMessage(messages, '*');
+    });
+  </script>
+</body>
+</html>
