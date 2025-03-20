@@ -72,11 +72,13 @@
   width: 8px;
   height: 8px;
   transition: width 0.2s ease; /* Smooth transition for width change */
+  
 }
 
 /* Wider scrollbar when hovered */
 .cm-scroller.scrollbar-hovered::-webkit-scrollbar {
   width: 8px;
+  
 }
 
 /* Optional: Style the scrollbar thumb */
@@ -88,17 +90,24 @@
 .theme-light .cm-scroller::-webkit-scrollbar-thumb {
   background-color: #d1d5dc;
   border-radius: 4px;
+  
 }
 
 /* Theme-specific scrollbar track styles */
 .theme-light .cm-scroller::-webkit-scrollbar-track {
   background-color: #f3f4f6;
   border-radius: 8px;
+  
 }
 
 .theme-dark .cm-scroller::-webkit-scrollbar-track {
   background-color: #364153;
   border-radius: 8px;
+  
+}
+
+.cm-scroller::-webkit-scrollbar-track {
+  margin: 8px;
 }
 
 :root {
