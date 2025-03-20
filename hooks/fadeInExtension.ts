@@ -32,7 +32,7 @@ export const fadeInField = StateField.define<DecorationSet>({
 // Editor theme with effects (unchanged)
 export const editorTheme = EditorView.theme({
   ".cm-fade-in": {
-    animation: "fadeIn 0.8s ease-in-out",
+    animation: "fadeIn 0.4s ease-in-out",
   },
   "@keyframes fadeIn": {
     from: { opacity: "0" },
