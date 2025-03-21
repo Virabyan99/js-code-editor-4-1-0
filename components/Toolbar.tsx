@@ -7,13 +7,13 @@ import { useEditorStore } from "@/store/editorStore";
 import { useConsoleStore } from "@/store/consoleStore";
 import { toast } from "react-toastify";
 import { parse } from "acorn";
-import { IconTrash, IconFilter } from "@tabler/icons-react"; // Added IconFilter
+import { IconTrash, IconFilter } from "@tabler/icons-react";
 
 export default function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useThemeStore();
   const { content, setContent } = useEditorStore();
-  const { addOutput, clearOutput, displayMode, toggleDisplayMode } = useConsoleStore(); // Added displayMode and toggleDisplayMode
+  const { clearOutput, displayMode, toggleDisplayMode } = useConsoleStore();
   const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
   // Get a reference to the sandbox iframe
@@ -79,7 +79,7 @@ export default function Toolbar() {
 
   const handleRunCode = () => {
     if (content.trim().length === 0) return;
-    clearOutput(); // Add this line
+    // Removed clearOutput() to preserve execution history
     console.log("Sending code to iframe:", content, "Iframe ref:", iframeRef);
     if (iframeRef && iframeRef.contentWindow) {
       iframeRef.contentWindow.postMessage(content, "*");
@@ -126,7 +126,7 @@ export default function Toolbar() {
         className="flex items-center w-fit h-fit"
         onClick={() => clearOutput()}
       />
-      {/* New "Show Last Only" toggle button */}
+      {/* Toggle display mode button */}
       <IconWithHover
         variant="filter"
         className="flex items-center w-fit h-fit"
@@ -134,8 +134,8 @@ export default function Toolbar() {
       />
       {/* Label to indicate current mode */}
       <span className="text-sm ml-2">
-  {displayMode === "all" ? "Showing All" : "Showing Last Only"}
-</span>
+        {displayMode === "all" ? "Showing All" : "Showing Last Only"}
+      </span>
     </div>
   );
 }

@@ -9,29 +9,22 @@ interface ConsoleMessage {
 
 // Define the console state interface
 interface ConsoleState {
-  output: ConsoleMessage[];
-  displayMode: "all" | "lastOnly"; // New state for display mode
-  addOutput: (message: ConsoleMessage) => void;
-  clearOutput: () => void;
-  toggleDisplayMode: () => void; // New function to toggle mode
+  allExecutions: ConsoleMessage[][]; // Array of executions, each containing an array of messages
+  displayMode: "all" | "lastOnly"; // Toggle between showing all or last execution
+  addExecutionOutput: (messages: ConsoleMessage[]) => void; // Add output from a single execution
+  clearOutput: () => void; // Clear all executions
+  toggleDisplayMode: () => void; // Switch display mode
 }
 
 // Create Zustand store
 export const useConsoleStore = create<ConsoleState>((set) => ({
-  output: [],
+  allExecutions: [],
   displayMode: "all", // Default to showing all messages
-  // consoleStore.ts
-addOutput: (message) =>
-  set((state) => {
-    console.log("Adding message:", message.text, "with displayMode:", state.displayMode);
-    if (state.displayMode === "all") {
-      return { output: [...state.output, message] };
-    } else if (state.displayMode === "lastOnly") {
-      return { output: [message] };
-    }
-    return { output: [...state.output, message], displayMode: "all" };
-  }),
-  clearOutput: () => set({ output: [] }),
+  addExecutionOutput: (messages) =>
+    set((state) => ({
+      allExecutions: [...state.allExecutions, messages],
+    })),
+  clearOutput: () => set({ allExecutions: [] }),
   toggleDisplayMode: () =>
     set((state) => ({
       displayMode: state.displayMode === "all" ? "lastOnly" : "all",

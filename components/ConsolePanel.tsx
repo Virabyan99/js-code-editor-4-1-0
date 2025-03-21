@@ -2,31 +2,31 @@ import { useConsoleStore } from '@/store/consoleStore';
 import { useEffect, useRef } from 'react';
 
 function ConsolePanel() {
-  const { output, addOutput } = useConsoleStore(); // Store for console messages
+  const { allExecutions, displayMode, addExecutionOutput } = useConsoleStore();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Compute displayed messages based on displayMode
+  const displayedMessages = displayMode === "all"
+    ? allExecutions.flat() // Flatten all executions into one array
+    : allExecutions[allExecutions.length - 1] || []; // Show only the last execution's messages
 
   // Set up message listener
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      // Check if the message comes from the iframe's contentWindow
       if (event.source !== iframeRef.current?.contentWindow) return;
 
       console.log("Message received from iframe:", event.data); // Debug log
 
       const data = event.data;
       if (Array.isArray(data)) {
-        // Add each message to the console store
-        data.forEach((msgObj) => {
-          if (msgObj && msgObj.type && msgObj.text) {
-            addOutput(msgObj);
-          }
-        });
+        // Add the entire array as one execution's output
+        addExecutionOutput(data.filter(msg => msg && msg.type && msg.text));
       }
     }
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [addOutput, iframeRef]);
+  }, [addExecutionOutput, iframeRef]);
 
   return (
     <div>
@@ -39,10 +39,10 @@ function ConsolePanel() {
         title="Sandboxed Code Execution"
       />
       {/* Console output display */}
-      {output.length === 0 ? (
+      {displayedMessages.length === 0 ? (
         <div className="text-gray-500">Console output will appear here...</div>
       ) : (
-        output.map((msg, index) => (
+        displayedMessages.map((msg, index) => (
           <div
             key={index}
             className={`text-[16px] mb-1 ${
