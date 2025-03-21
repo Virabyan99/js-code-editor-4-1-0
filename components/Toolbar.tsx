@@ -7,13 +7,13 @@ import { useEditorStore } from "@/store/editorStore";
 import { useConsoleStore } from "@/store/consoleStore";
 import { toast } from "react-toastify";
 import { parse } from "acorn";
-import { IconTrash } from "@tabler/icons-react"; // Added IconTrash import
+import { IconTrash, IconFilter } from "@tabler/icons-react"; // Added IconFilter
 
 export default function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useThemeStore();
   const { content, setContent } = useEditorStore();
-  const { addOutput, clearOutput } = useConsoleStore(); // Destructure clearOutput
+  const { addOutput, clearOutput, displayMode, toggleDisplayMode } = useConsoleStore(); // Added displayMode and toggleDisplayMode
   const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
   // Get a reference to the sandbox iframe
@@ -79,7 +79,8 @@ export default function Toolbar() {
 
   const handleRunCode = () => {
     if (content.trim().length === 0) return;
-    console.log("Sending code to iframe:", content, "Iframe ref:", iframeRef); // Debug log
+    clearOutput(); // Add this line
+    console.log("Sending code to iframe:", content, "Iframe ref:", iframeRef);
     if (iframeRef && iframeRef.contentWindow) {
       iframeRef.contentWindow.postMessage(content, "*");
     }
@@ -120,12 +121,21 @@ export default function Toolbar() {
         onClick={handleRunCode}
         className="w-fit h-fit flex items-center lg:ml-[420px]"
       />
-      {/* New "Clear" button */}
       <IconWithHover
         variant="trash"
         className="flex items-center w-fit h-fit"
-        onClick={() => clearOutput()} // Calls clearOutput on click
+        onClick={() => clearOutput()}
       />
+      {/* New "Show Last Only" toggle button */}
+      <IconWithHover
+        variant="filter"
+        className="flex items-center w-fit h-fit"
+        onClick={toggleDisplayMode}
+      />
+      {/* Label to indicate current mode */}
+      <span className="text-sm ml-2">
+  {displayMode === "all" ? "Showing All" : "Showing Last Only"}
+</span>
     </div>
   );
 }

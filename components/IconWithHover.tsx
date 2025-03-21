@@ -1,10 +1,10 @@
-import { IconCircleDotted, IconUpload, IconDownload, IconSun, IconMoon, IconPlayerPlay, IconTrash } from "@tabler/icons-react"; // Added IconTrash
+import { IconCircleDotted, IconUpload, IconDownload, IconSun, IconMoon, IconPlayerPlay, IconTrash, IconFilter } from "@tabler/icons-react"; // Added IconFilter
 import { useThemeStore } from "@/store/themeStore"; // Adjust the import path as needed
 import { useState } from "react";
 
 interface IconWithHoverProps {
   className?: string;
-  variant?: "circle" | "upload" | "download" | "sun" | "moon" | "run" | "trash"; // Added "trash"
+  variant?: "circle" | "upload" | "download" | "sun" | "moon" | "run" | "trash" | "filter"; // Added "filter"
   onClick?: () => void;
 }
 
@@ -35,8 +35,10 @@ export default function IconWithHover({
       ? IconMoon
       : variant === "run"
       ? IconPlayerPlay
-      : variant === "trash" // Added "trash" variant
+      : variant === "trash"
       ? IconTrash
+      : variant === "filter" // Added "filter" variant
+      ? IconFilter
       : IconCircleDotted;
 
   return (
@@ -66,8 +68,10 @@ export default function IconWithHover({
           ? "Toggle theme"
           : variant === "run"
           ? "Run code"
-          : variant === "trash" // Added accessibility label
+          : variant === "trash"
           ? "Clear console"
+          : variant === "filter" // Added accessibility label
+          ? "Toggle display mode"
           : "Interactive icon"
       }
       onClick={onClick}
