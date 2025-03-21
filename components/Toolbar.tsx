@@ -7,12 +7,13 @@ import { useEditorStore } from "@/store/editorStore";
 import { useConsoleStore } from "@/store/consoleStore";
 import { toast } from "react-toastify";
 import { parse } from "acorn";
+import { IconTrash } from "@tabler/icons-react"; // Added IconTrash import
 
 export default function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useThemeStore();
   const { content, setContent } = useEditorStore();
-  const { addOutput } = useConsoleStore();
+  const { addOutput, clearOutput } = useConsoleStore(); // Destructure clearOutput
   const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
   // Get a reference to the sandbox iframe
@@ -118,6 +119,12 @@ export default function Toolbar() {
         variant="run"
         onClick={handleRunCode}
         className="w-fit h-fit flex items-center lg:ml-[420px]"
+      />
+      {/* New "Clear" button */}
+      <IconWithHover
+        variant="trash"
+        className="flex items-center w-fit h-fit"
+        onClick={() => clearOutput()} // Calls clearOutput on click
       />
     </div>
   );

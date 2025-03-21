@@ -1,3 +1,4 @@
+// store/consoleStore.ts
 import { create } from "zustand";
 
 // Define the message object structure
@@ -18,5 +19,5 @@ export const useConsoleStore = create<ConsoleState>((set) => ({
   output: [],
   addOutput: (message) =>
     set((state) => ({ output: [...state.output, message] })),
-  clearOutput: () => set({ output: [] }),
+  clearOutput: () => set({ output: [] }), // Resets output to an empty array
 }));
