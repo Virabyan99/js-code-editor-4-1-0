@@ -20,18 +20,56 @@
         // Array to store console messages
         let messages = [];
 
-        // Override console methods to capture output
+        // Keep references to original console methods
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        const originalDir = console.dir;
+        const originalTable = console.table;
+
+        // Override console.log
         console.log = (...args) => {
           const text = args.join(' ');
           messages.push({ type: 'log', text });
+          originalLog(...args);
         };
+
+        // Override console.error
         console.error = (...args) => {
           const text = args.join(' ');
           messages.push({ type: 'error', text });
+          originalError(...args);
         };
+
+        // Override console.warn
         console.warn = (...args) => {
           const text = args.join(' ');
           messages.push({ type: 'warn', text });
+          originalWarn(...args);
+        };
+
+        // Override console.dir
+        console.dir = (obj) => {
+          let serialized;
+          try {
+            serialized = JSON.stringify(obj, null, 2); // Serialize object to JSON
+          } catch (error) {
+            serialized = 'Unserializable object';
+          }
+          messages.push({ type: 'dir', data: serialized });
+          originalDir(obj);
+        };
+
+        // Override console.table
+        console.table = (tabularData) => {
+          let tablePayload;
+          try {
+            tablePayload = JSON.parse(JSON.stringify(tabularData)); // Shallow copy for safety
+          } catch (error) {
+            tablePayload = String(tabularData);
+          }
+          messages.push({ type: 'table', data: tablePayload });
+          originalTable(tabularData);
         };
 
         try {
@@ -44,6 +82,13 @@
         } catch (err) {
           messages.push({ type: 'error', text: `Error: ${err.message}` });
         }
+
+        // Restore original console methods
+        console.log = originalLog;
+        console.error = originalError;
+        console.warn = originalWarn;
+        console.dir = originalDir;
+        console.table = originalTable;
 
         // Send captured messages to the parent window
         parentWindow.postMessage(messages, parentOrigin);

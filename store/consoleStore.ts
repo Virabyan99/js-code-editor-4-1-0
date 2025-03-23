@@ -2,10 +2,11 @@
 import { create } from "zustand";
 
 // Define the message object structure
-interface ConsoleMessage {
-  type: "log" | "warn" | "error";
-  text: string;
-}
+// store/consoleStore.ts
+export type ConsoleMessage =
+  | { type: "log" | "warn" | "error"; text: string }
+  | { type: "dir"; data: string }       // JSON string for console.dir
+  | { type: "table"; data: any };       // Object or array for console.table
 
 // Define the console state interface
 interface ConsoleState {

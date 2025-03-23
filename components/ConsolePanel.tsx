@@ -1,5 +1,7 @@
 import { useConsoleStore } from '@/store/consoleStore';
 import { useEffect, useRef } from 'react';
+import TableRenderer from './TableRenderer';
+import DirRenderer from './DirRenderer';
 
 function ConsolePanel() {
   const { allExecutions, displayMode, addExecutionOutput } = useConsoleStore();
@@ -20,7 +22,7 @@ function ConsolePanel() {
       const data = event.data;
       if (Array.isArray(data)) {
         // Add the entire array as one execution's output
-        addExecutionOutput(data.filter(msg => msg && msg.type && msg.text));
+        addExecutionOutput(data.filter(msg => msg && (msg.type && msg.text) || (msg.type === 'dir' && msg.data) || (msg.type === 'table' && msg.data)));
       }
     }
 
@@ -42,20 +44,39 @@ function ConsolePanel() {
       {displayedMessages.length === 0 ? (
         <div className="text-gray-500">Console output will appear here...</div>
       ) : (
-        displayedMessages.map((msg, index) => (
-          <div
-            key={index}
-            className={`text-[16px] mb-1 ${
-              msg.type === 'error'
-                ? 'text-red-600'
-                : msg.type === 'warn'
-                ? 'text-yellow-600'
-                : 'text-gray-800'
-            }`}
-          >
-            {msg.text}
-          </div>
-        ))
+        displayedMessages.map((msg, index) => {
+          let content: React.ReactNode = null;
+          let textColor = "text-gray-800"; // Default for log
+
+          switch (msg.type) {
+            case "warn":
+              textColor = "text-yellow-600";
+              content = msg.text;
+              break;
+            case "error":
+              textColor = "text-red-600";
+              content = msg.text;
+              break;
+            case "log":
+              content = msg.text;
+              break;
+            case "dir":
+              content = <DirRenderer dataString={msg.data} />;
+              break;
+            case "table":
+              content = <TableRenderer data={msg.data} />;
+              break;
+            default:
+              content = msg.text || "Unknown message type";
+              break;
+          }
+
+          return (
+            <div key={index} className={`${textColor} text-[16px] mb-1`}>
+              {content}
+            </div>
+          );
+        })
       )}
     </div>
   );
