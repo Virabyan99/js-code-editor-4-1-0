@@ -2,37 +2,42 @@ import { useConsoleStore } from '@/store/consoleStore';
 import { useEffect, useRef } from 'react';
 import TableRenderer from './TableRenderer';
 import DirRenderer from './DirRenderer';
+import { useSandbox } from '@/hooks/useSandbox';
 
 function ConsolePanel() {
   const { allExecutions, displayMode, addExecutionOutput } = useConsoleStore();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const seenSendIds = useRef(new Set()); // To track unique sendIds
+
+  // Integrate the useSandbox hook with addExecutionOutput
+  useSandbox(iframeRef, addExecutionOutput);
 
   // Compute displayed messages based on displayMode
   const displayedMessages = displayMode === "all"
-    ? allExecutions.flat() // Flatten all executions into one array
-    : allExecutions[allExecutions.length - 1] || []; // Show only the last execution's messages
+    ? allExecutions.flat()
+    : allExecutions[allExecutions.length - 1] || [];
 
-  // Set up message listener
+  // Set up message listener for console messages
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.source !== iframeRef.current?.contentWindow) return;
 
-      console.log("Message received from iframe:", event.data); // Debug log
-
       const data = event.data;
-      if (Array.isArray(data)) {
-        // Add the entire array as one execution's output
-        addExecutionOutput(
-          data.filter(
-            (msg) =>
-              msg &&
-              (msg.type &&
-                (msg.text ||
-                  (msg.type === 'dir' && msg.data) ||
-                  (msg.type === 'table' && msg.data) ||
-                  (msg.type === 'time' && msg.label && msg.duration)))
-          )
-        );
+      if (data && data.sendId && !seenSendIds.current.has(data.sendId)) {
+        seenSendIds.current.add(data.sendId);
+        if (Array.isArray(data.messages)) {
+          addExecutionOutput(
+            data.messages.filter(
+              (msg) =>
+                msg &&
+                (msg.type &&
+                  (msg.text ||
+                    (msg.type === 'dir' && msg.data) ||
+                    (msg.type === 'table' && msg.data) ||
+                    (msg.type === 'time' && msg.label && msg.duration)))
+            )
+          );
+        }
       }
     }
 
@@ -77,8 +82,8 @@ function ConsolePanel() {
               content = <TableRenderer data={msg.data} />;
               break;
             case "time":
-              content = `Timer ${msg.label}: ${msg.duration}ms`; // Format timing message
-              textColor = "text-blue-600"; // Distinct color for timing
+              content = `Timer ${msg.label}: ${msg.duration}ms`;
+              textColor = "text-blue-600";
               break;
             default:
               content = msg.text || "Unknown message type";

@@ -7,13 +7,14 @@
   </head>
   <body>
     <script>
-      window.addEventListener('message', (event) => {
-        const originalConsoleLog = console.log; // For debugging
-        originalConsoleLog('Message received in sandbox:', event.data);
+      // Map to store callbacks with their IDs
+      let callbackMap = {};
+      let nextCallbackId = 0;
+      let sendId = 0; // Unique ID for each message send
 
+      window.addEventListener('message', (event) => {
         const parentWindow = event.source;
         const parentOrigin = event.origin;
-        const codeToRun = event.data;
 
         let messages = [];
         let timerMap = {};
@@ -26,29 +27,27 @@
         const originalTable = console.table;
         const originalTime = console.time;
         const originalTimeEnd = console.timeEnd;
+        const originalSetTimeout = window.setTimeout;
+        const originalSetInterval = window.setInterval;
+        const originalClearTimeout = window.clearTimeout;
+        const originalClearInterval = window.clearInterval;
 
-        // Override console.log (optional: remove originalLog if not needed)
+        // Override console methods
         console.log = (...args) => {
           const text = args.join(' ');
           messages.push({ type: 'log', text });
-          // originalLog(...args); // Comment out to avoid browser console
         };
 
-        // Override console.error
         console.error = (...args) => {
           const text = args.join(' ');
           messages.push({ type: 'error', text });
-          // originalError(...args);
         };
 
-        // Override console.warn
         console.warn = (...args) => {
           const text = args.join(' ');
           messages.push({ type: 'warn', text });
-          // originalWarn(...args);
         };
 
-        // Override console.dir
         console.dir = (obj) => {
           let serialized;
           try {
@@ -57,10 +56,8 @@
             serialized = 'Unserializable object';
           }
           messages.push({ type: 'dir', data: serialized });
-          // originalDir(obj);
         };
 
-        // Override console.table
         console.table = (tabularData) => {
           let tablePayload;
           try {
@@ -69,28 +66,20 @@
             tablePayload = String(tabularData);
           }
           messages.push({ type: 'table', data: tablePayload });
-          // originalTable(tabularData);
         };
 
-        // Override console.time
         console.time = (label = "default") => {
-          originalConsoleLog('Starting timer for label:', label); // Debug
           timerMap[label] = performance.now();
-          // Do NOT call originalTime(label) to avoid browser console
         };
 
-        // Override console.timeEnd
         console.timeEnd = (label = "default") => {
-          originalConsoleLog('Ending timer for label:', label); // Debug
           if (timerMap[label] !== undefined) {
             const duration = performance.now() - timerMap[label];
-            const timeMessage = {
+            messages.push({
               type: 'time',
               label,
               duration: duration.toFixed(2)
-            };
-            messages.push(timeMessage);
-            originalConsoleLog('Pushed time message:', timeMessage); // Debug
+            });
             delete timerMap[label];
           } else {
             messages.push({
@@ -98,17 +87,90 @@
               text: `No such label '${label}' for console.timeEnd()`
             });
           }
-          // Do NOT call originalTimeEnd(label) to avoid browser console
         };
 
-        try {
-          const runnable = new Function(codeToRun);
-          const result = runnable();
-          if (result !== undefined) {
-            messages.push({ type: 'log', text: String(result) });
+        // Override setTimeout
+        window.setTimeout = (callback, delay = 0, ...args) => {
+          const callbackId = nextCallbackId++;
+          callbackMap[callbackId] = { callback, args, timerType: "timeout" };
+          const tempId = Math.random().toString(36).slice(2);
+          parentWindow.postMessage({
+            type: "sandbox-timer-create",
+            timerType: "timeout",
+            callbackId,
+            delay,
+            tempId
+          }, parentOrigin);
+          return tempId;
+        };
+
+        // Override setInterval
+        window.setInterval = (callback, interval = 0, ...args) => {
+          const callbackId = nextCallbackId++;
+          callbackMap[callbackId] = { callback, args, timerType: "interval" };
+          const tempId = Math.random().toString(36).slice(2);
+          parentWindow.postMessage({
+            type: "sandbox-timer-create",
+            timerType: "interval",
+            callbackId,
+            delay: interval,
+            tempId
+          }, parentOrigin);
+          return tempId;
+        };
+
+        // Override clearTimeout
+        window.clearTimeout = (timerId) => {
+          parentWindow.postMessage({
+            type: "sandbox-timer-clear",
+            timerType: "timeout",
+            timerId
+          }, parentOrigin);
+        };
+
+        // Override clearInterval
+        window.clearInterval = (timerId) => {
+          parentWindow.postMessage({
+            type: "sandbox-timer-clear",
+            timerType: "interval",
+            timerId
+          }, parentOrigin);
+        };
+
+        // Handle incoming messages
+        if (typeof event.data === 'string') {
+          // Execute user code
+          try {
+            const runnable = new Function(event.data);
+            const result = runnable();
+            if (result !== undefined) {
+              messages.push({ type: 'log', text: String(result) });
+            }
+          } catch (err) {
+            messages.push({ type: 'error', text: `Error: ${err.message}` });
           }
-        } catch (err) {
-          messages.push({ type: 'error', text: `Error: ${err.message}` });
+          parentWindow.postMessage({ sendId: sendId++, messages }, parentOrigin);
+        } else if (event.data.type === "execute-callback") {
+          // Execute timer callback
+          const { callbackId } = event.data;
+          const { callback, args, timerType } = callbackMap[callbackId] || {};
+          if (callback) {
+            try {
+              callback(...args);
+            } catch (err) {
+              messages.push({ type: 'error', text: `Error in callback: ${err.message}` });
+            }
+            if (timerType === "timeout") {
+              delete callbackMap[callbackId];
+            }
+            if (messages.length > 0) {
+              parentWindow.postMessage({ sendId: sendId++, messages }, parentOrigin);
+            }
+          }
+        } else if (event.data.type === "remove-callback") {
+          // Remove callback when timer is cleared
+          const { callbackId } = event.data;
+          delete callbackMap[callbackId];
         }
 
         // Restore original methods
@@ -119,10 +181,10 @@
         console.table = originalTable;
         console.time = originalTime;
         console.timeEnd = originalTimeEnd;
-
-        // Debug log before sending
-        originalConsoleLog('Sending messages:', messages);
-        parentWindow.postMessage(messages, parentOrigin);
+        window.setTimeout = originalSetTimeout;
+        window.setInterval = originalSetInterval;
+        window.clearTimeout = originalClearTimeout;
+        window.clearInterval = originalClearInterval;
       });
     </script>
   </body>
