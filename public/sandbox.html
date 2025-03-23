@@ -11,10 +11,49 @@
       let callbackMap = {};
       let nextCallbackId = 0;
       let sendId = 0; // Unique ID for each message send
+      let parentWindow; // Store the parent window reference
+      let parentOrigin; // Store the parent origin
 
-      window.addEventListener('message', (event) => {
-        const parentWindow = event.source;
-        const parentOrigin = event.origin;
+      // Global error handler for uncaught errors
+      window.onerror = function (message, source, lineno, colno, error) {
+        if (parentWindow) {
+          const errorData = {
+            type: "error",
+            text: String(message),
+            source: String(source),
+            lineno,
+            colno,
+            stack: error && error.stack ? String(error.stack) : null,
+          };
+          parentWindow.postMessage(
+            { sendId: sendId++, messages: [errorData] },
+            parentOrigin
+          );
+        }
+        return false; // Allow browser to log error (useful for debugging)
+      };
+
+      // Handler for unhandled promise rejections
+      window.addEventListener("unhandledrejection", (event) => {
+        if (parentWindow) {
+          const errorData = {
+            type: "error",
+            text: `Unhandled Rejection: ${String(event.reason)}`,
+            stack:
+              event.reason && event.reason.stack
+                ? String(event.reason.stack)
+                : null,
+          };
+          parentWindow.postMessage(
+            { sendId: sendId++, messages: [errorData] },
+            parentOrigin
+          );
+        }
+      });
+
+      window.addEventListener("message", (event) => {
+        parentWindow = event.source; // Set parent window reference
+        parentOrigin = event.origin; // Set parent origin
 
         let messages = [];
         let timerMap = {};
@@ -34,18 +73,18 @@
 
         // Override console methods
         console.log = (...args) => {
-          const text = args.join(' ');
-          messages.push({ type: 'log', text });
+          const text = args.join(" ");
+          messages.push({ type: "log", text });
         };
 
         console.error = (...args) => {
-          const text = args.join(' ');
-          messages.push({ type: 'error', text });
+          const text = args.join(" ");
+          messages.push({ type: "error", text });
         };
 
         console.warn = (...args) => {
-          const text = args.join(' ');
-          messages.push({ type: 'warn', text });
+          const text = args.join(" ");
+          messages.push({ type: "warn", text });
         };
 
         console.dir = (obj) => {
@@ -53,9 +92,9 @@
           try {
             serialized = JSON.stringify(obj, null, 2);
           } catch (error) {
-            serialized = 'Unserializable object';
+            serialized = "Unserializable object";
           }
-          messages.push({ type: 'dir', data: serialized });
+          messages.push({ type: "dir", data: serialized });
         };
 
         console.table = (tabularData) => {
@@ -65,7 +104,7 @@
           } catch (error) {
             tablePayload = String(tabularData);
           }
-          messages.push({ type: 'table', data: tablePayload });
+          messages.push({ type: "table", data: tablePayload });
         };
 
         console.time = (label = "default") => {
@@ -76,15 +115,15 @@
           if (timerMap[label] !== undefined) {
             const duration = performance.now() - timerMap[label];
             messages.push({
-              type: 'time',
+              type: "time",
               label,
-              duration: duration.toFixed(2)
+              duration: duration.toFixed(2),
             });
             delete timerMap[label];
           } else {
             messages.push({
-              type: 'warn',
-              text: `No such label '${label}' for console.timeEnd()`
+              type: "warn",
+              text: `No such label '${label}' for console.timeEnd()`,
             });
           }
         };
@@ -94,13 +133,16 @@
           const callbackId = nextCallbackId++;
           callbackMap[callbackId] = { callback, args, timerType: "timeout" };
           const tempId = Math.random().toString(36).slice(2);
-          parentWindow.postMessage({
-            type: "sandbox-timer-create",
-            timerType: "timeout",
-            callbackId,
-            delay,
-            tempId
-          }, parentOrigin);
+          parentWindow.postMessage(
+            {
+              type: "sandbox-timer-create",
+              timerType: "timeout",
+              callbackId,
+              delay,
+              tempId,
+            },
+            parentOrigin
+          );
           return tempId;
         };
 
@@ -109,47 +151,63 @@
           const callbackId = nextCallbackId++;
           callbackMap[callbackId] = { callback, args, timerType: "interval" };
           const tempId = Math.random().toString(36).slice(2);
-          parentWindow.postMessage({
-            type: "sandbox-timer-create",
-            timerType: "interval",
-            callbackId,
-            delay: interval,
-            tempId
-          }, parentOrigin);
+          parentWindow.postMessage(
+            {
+              type: "sandbox-timer-create",
+              timerType: "interval",
+              callbackId,
+              delay: interval,
+              tempId,
+            },
+            parentOrigin
+          );
           return tempId;
         };
 
         // Override clearTimeout
         window.clearTimeout = (timerId) => {
-          parentWindow.postMessage({
-            type: "sandbox-timer-clear",
-            timerType: "timeout",
-            timerId
-          }, parentOrigin);
+          parentWindow.postMessage(
+            {
+              type: "sandbox-timer-clear",
+              timerType: "timeout",
+              timerId,
+            },
+            parentOrigin
+          );
         };
 
         // Override clearInterval
         window.clearInterval = (timerId) => {
-          parentWindow.postMessage({
-            type: "sandbox-timer-clear",
-            timerType: "interval",
-            timerId
-          }, parentOrigin);
+          parentWindow.postMessage(
+            {
+              type: "sandbox-timer-clear",
+              timerType: "interval",
+              timerId,
+            },
+            parentOrigin
+          );
         };
 
         // Handle incoming messages
-        if (typeof event.data === 'string') {
+        if (typeof event.data === "string") {
           // Execute user code
           try {
             const runnable = new Function(event.data);
             const result = runnable();
             if (result !== undefined) {
-              messages.push({ type: 'log', text: String(result) });
+              messages.push({ type: "log", text: String(result) });
             }
           } catch (err) {
-            messages.push({ type: 'error', text: `Error: ${err.message}` });
+            messages.push({
+              type: "error",
+              text: `Error: ${err.message}`,
+              stack: err.stack || null,
+            });
           }
-          parentWindow.postMessage({ sendId: sendId++, messages }, parentOrigin);
+          parentWindow.postMessage(
+            { sendId: sendId++, messages },
+            parentOrigin
+          );
         } else if (event.data.type === "execute-callback") {
           // Execute timer callback
           const { callbackId } = event.data;
@@ -158,13 +216,20 @@
             try {
               callback(...args);
             } catch (err) {
-              messages.push({ type: 'error', text: `Error in callback: ${err.message}` });
+              messages.push({
+                type: "error",
+                text: `Error in callback: ${err.message}`,
+                stack: err.stack || null,
+              });
             }
             if (timerType === "timeout") {
               delete callbackMap[callbackId];
             }
             if (messages.length > 0) {
-              parentWindow.postMessage({ sendId: sendId++, messages }, parentOrigin);
+              parentWindow.postMessage(
+                { sendId: sendId++, messages },
+                parentOrigin
+              );
             }
           }
         } else if (event.data.type === "remove-callback") {

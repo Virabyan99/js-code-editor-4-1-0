@@ -1,12 +1,18 @@
-import { useConsoleStore } from '@/store/consoleStore';
-import { useEffect, useRef } from 'react';
-import TableRenderer from './TableRenderer';
-import DirRenderer from './DirRenderer';
-import { useSandbox } from '@/hooks/useSandbox';
-import { IconLoader2 } from '@tabler/icons-react';
+import { useConsoleStore } from "@/store/consoleStore";
+import { useEffect, useRef } from "react";
+import TableRenderer from "./TableRenderer";
+import DirRenderer from "./DirRenderer";
+import { useSandbox } from "@/hooks/useSandbox";
+import { IconLoader2 } from "@tabler/icons-react";
 
 function ConsolePanel() {
-  const { allExecutions, displayMode, addExecutionOutput, isRunning, setIsRunning } = useConsoleStore(); // Added isRunning and setIsRunning
+  const {
+    allExecutions,
+    displayMode,
+    addExecutionOutput,
+    isRunning,
+    setIsRunning,
+  } = useConsoleStore(); // Added isRunning and setIsRunning
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const seenSendIds = useRef(new Set()); // To track unique sendIds
 
@@ -14,9 +20,10 @@ function ConsolePanel() {
   useSandbox(iframeRef, addExecutionOutput);
 
   // Compute displayed messages based on displayMode
-  const displayedMessages = displayMode === "all"
-    ? allExecutions.flat()
-    : allExecutions[allExecutions.length - 1] || [];
+  const displayedMessages =
+    displayMode === "all"
+      ? allExecutions.flat()
+      : allExecutions[allExecutions.length - 1] || [];
 
   // Set up message listener for console messages
   useEffect(() => {
@@ -33,9 +40,9 @@ function ConsolePanel() {
                 msg &&
                 (msg.type &&
                   (msg.text ||
-                    (msg.type === 'dir' && msg.data) ||
-                    (msg.type === 'table' && msg.data) ||
-                    (msg.type === 'time' && msg.label && msg.duration)))
+                    (msg.type === "dir" && msg.data) ||
+                    (msg.type === "table" && msg.data) ||
+                    (msg.type === "time" && msg.label && msg.duration)))
             )
           );
           setIsRunning(false); // Set isRunning to false when messages are received
@@ -43,8 +50,8 @@ function ConsolePanel() {
       }
     }
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [addExecutionOutput, iframeRef, setIsRunning]);
 
   return (
@@ -54,12 +61,14 @@ function ConsolePanel() {
         ref={iframeRef}
         src="/sandbox.html"
         sandbox="allow-scripts"
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         title="Sandboxed Code Execution"
       />
       {/* Console output display */}
       {isRunning && (
-        <div className="text-blue-600 italic mb-2 flex  flex-row">Running <IconLoader2 className='animate-spin ml-2'/></div>
+        <div className="text-blue-600 italic mb-2 flex flex-row">
+          Running ...
+        </div>
       )}
       {displayedMessages.length === 0 && !isRunning ? (
         <div className="text-gray-500">Console output will appear here...</div>
@@ -75,7 +84,18 @@ function ConsolePanel() {
               break;
             case "error":
               textColor = "text-red-600";
-              content = msg.text;
+              if (msg.stack) {
+                content = (
+                  <div>
+                    <div>{msg.text}</div>
+                    <pre className="whitespace-pre-wrap text-sm mt-1 text-red-500">
+                      {msg.stack}
+                    </pre>
+                  </div>
+                );
+              } else {
+                content = msg.text;
+              }
               break;
             case "log":
               content = msg.text;
