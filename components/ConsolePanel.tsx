@@ -22,7 +22,17 @@ function ConsolePanel() {
       const data = event.data;
       if (Array.isArray(data)) {
         // Add the entire array as one execution's output
-        addExecutionOutput(data.filter(msg => msg && (msg.type && msg.text) || (msg.type === 'dir' && msg.data) || (msg.type === 'table' && msg.data)));
+        addExecutionOutput(
+          data.filter(
+            (msg) =>
+              msg &&
+              (msg.type &&
+                (msg.text ||
+                  (msg.type === 'dir' && msg.data) ||
+                  (msg.type === 'table' && msg.data) ||
+                  (msg.type === 'time' && msg.label && msg.duration)))
+          )
+        );
       }
     }
 
@@ -65,6 +75,10 @@ function ConsolePanel() {
               break;
             case "table":
               content = <TableRenderer data={msg.data} />;
+              break;
+            case "time":
+              content = `Timer ${msg.label}: ${msg.duration}ms`; // Format timing message
+              textColor = "text-blue-600"; // Distinct color for timing
               break;
             default:
               content = msg.text || "Unknown message type";
