@@ -12,15 +12,18 @@ export type ConsoleMessage =
 interface ConsoleState {
   allExecutions: ConsoleMessage[][]; // Array of executions, each containing an array of messages
   displayMode: "all" | "lastOnly";   // Toggle between showing all or last execution
+  isRunning: boolean;                // Track if code is currently running
   addExecutionOutput: (messages: ConsoleMessage[]) => void; // Add output from a single execution
   clearOutput: () => void;          // Clear all executions
   toggleDisplayMode: () => void;    // Switch display mode
+  setIsRunning: (running: boolean) => void; // Set the running state
 }
 
 // Create Zustand store
 export const useConsoleStore = create<ConsoleState>((set) => ({
   allExecutions: [],
   displayMode: "all", // Default to showing all messages
+  isRunning: false,   // Default to not running
   addExecutionOutput: (messages) =>
     set((state) => ({
       allExecutions: [...state.allExecutions, messages],
@@ -30,4 +33,5 @@ export const useConsoleStore = create<ConsoleState>((set) => ({
     set((state) => ({
       displayMode: state.displayMode === "all" ? "lastOnly" : "all",
     })),
+  setIsRunning: (running) => set({ isRunning: running }),
 }));

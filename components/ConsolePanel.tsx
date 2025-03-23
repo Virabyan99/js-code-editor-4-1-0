@@ -3,9 +3,10 @@ import { useEffect, useRef } from 'react';
 import TableRenderer from './TableRenderer';
 import DirRenderer from './DirRenderer';
 import { useSandbox } from '@/hooks/useSandbox';
+import { IconLoader2 } from '@tabler/icons-react';
 
 function ConsolePanel() {
-  const { allExecutions, displayMode, addExecutionOutput } = useConsoleStore();
+  const { allExecutions, displayMode, addExecutionOutput, isRunning, setIsRunning } = useConsoleStore(); // Added isRunning and setIsRunning
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const seenSendIds = useRef(new Set()); // To track unique sendIds
 
@@ -37,13 +38,14 @@ function ConsolePanel() {
                     (msg.type === 'time' && msg.label && msg.duration)))
             )
           );
+          setIsRunning(false); // Set isRunning to false when messages are received
         }
       }
     }
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [addExecutionOutput, iframeRef]);
+  }, [addExecutionOutput, iframeRef, setIsRunning]);
 
   return (
     <div>
@@ -56,7 +58,10 @@ function ConsolePanel() {
         title="Sandboxed Code Execution"
       />
       {/* Console output display */}
-      {displayedMessages.length === 0 ? (
+      {isRunning && (
+        <div className="text-blue-600 italic mb-2 flex  flex-row">Running <IconLoader2 className='animate-spin ml-2'/></div>
+      )}
+      {displayedMessages.length === 0 && !isRunning ? (
         <div className="text-gray-500">Console output will appear here...</div>
       ) : (
         displayedMessages.map((msg, index) => {
