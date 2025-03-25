@@ -13,7 +13,11 @@ export default function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useThemeStore();
   const { content, setContent } = useEditorStore();
+<<<<<<< HEAD
   const { clearOutput, displayMode, toggleDisplayMode, startNewExecution } = useConsoleStore();
+=======
+  const { clearOutput, displayMode, toggleDisplayMode, setIsRunning } = useConsoleStore(); // Added setIsRunning
+>>>>>>> 8a59c8ffe1bff1e2f10b47eb43cbe017e0077245
   const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
   // Get a reference to the sandbox iframe
@@ -79,8 +83,13 @@ export default function Toolbar() {
 
   const handleRunCode = () => {
     if (content.trim().length === 0) return;
+<<<<<<< HEAD
     const executionId = startNewExecution();
     console.log("Sending code to iframe:", content, "with executionId:", executionId);
+=======
+    setIsRunning(true); // Set isRunning to true before sending code
+    console.log("Sending code to iframe:", content, "Iframe ref:", iframeRef);
+>>>>>>> 8a59c8ffe1bff1e2f10b47eb43cbe017e0077245
     if (iframeRef && iframeRef.contentWindow) {
       iframeRef.contentWindow.postMessage({ code: content, executionId }, "*");
     } else {
