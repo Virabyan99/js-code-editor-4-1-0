@@ -1,46 +1,66 @@
+import { forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
 import { useConsoleStore } from '@/store/consoleStore';
-import { useEffect, useRef } from 'react';
 import TableRenderer from './TableRenderer';
 import DirRenderer from './DirRenderer';
+import { useSandbox } from '@/hooks/useSandbox'; // Import the hook
 
-function ConsolePanel() {
-  const { allExecutions, displayMode, addExecutionOutput } = useConsoleStore();
+const ConsolePanel = forwardRef((props, ref) => {
+  const { allExecutions, displayMode, addMessageToExecution } = useConsoleStore();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const seenSendIds = useRef(new Set()); // To track unique sendIds
 
-  // Integrate the useSandbox hook with addExecutionOutput
-  useSandbox(iframeRef, addExecutionOutput);
+  // Add the useSandbox hook to handle timer messages
+  useSandbox(iframeRef);
 
-  // Compute displayed messages based on displayMode
-  const displayedMessages = displayMode === "all"
-    ? allExecutions.flat() // Flatten all executions into one array
-    : allExecutions[allExecutions.length - 1] || []; // Show only the last execution's messages
+  const runCode = (code: string) => {
+    if (iframeRef.current) {
+      const executionId = useConsoleStore.getState().startNewExecution();
+      iframeRef.current.contentWindow?.postMessage({ code, executionId }, '*');
+    }
+  };
 
-  // Set up message listener
+  useImperativeHandle(ref, () => ({ runCode }), [runCode]);
+
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.source !== iframeRef.current?.contentWindow) return;
 
       const data = event.data;
-      if (Array.isArray(data)) {
-        // Add the entire array as one execution's output
-        addExecutionOutput(
-          data.filter(
-            (msg) =>
-              msg &&
-              (msg.type &&
-                (msg.text ||
-                  (msg.type === 'dir' && msg.data) ||
-                  (msg.type === 'table' && msg.data) ||
-                  (msg.type === 'time' && msg.label && msg.duration)))
-          )
-        );
+      // Debug log to verify incoming messages
+      console.log('ConsolePanel received message:', data);
+      if (data.type === 'console') {
+        const { subtype, text, data: msgData, label, duration, executionId } = data;
+        let message;
+        switch (subtype) {
+          case 'log':
+          case 'warn':
+          case 'error':
+            message = { type: subtype, text };
+            break;
+          case 'dir':
+            message = { type: 'dir', data: msgData };
+            break;
+          case 'table':
+            message = { type: 'table', data: msgData };
+            break;
+          case 'time':
+            message = { type: 'time', label, duration };
+            break;
+          default:
+            message = { type: 'log', text: 'Unknown message type' };
+        }
+        addMessageToExecution(executionId, message);
       }
     }
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [addExecutionOutput, iframeRef]);
+  }, [addMessageToExecution]);
+
+  // Compute displayed messages based on displayMode
+  const displayedMessages =
+    displayMode === 'all'
+      ? allExecutions.reduce((acc, exec) => acc.concat(exec.messages), [])
+      : allExecutions.length > 0 ? allExecutions[allExecutions.length - 1].messages : [];
 
   return (
     <div>
@@ -48,10 +68,9 @@ function ConsolePanel() {
         ref={iframeRef}
         src="/sandbox.html"
         sandbox="allow-scripts"
-        style={{ display: "none" }}
+        style={{ display: 'none' }}
         title="Sandboxed Code Execution"
       />
-      {/* Console output display */}
       {displayedMessages.length === 0 ? (
         <div className="text-gray-500">Console output will appear here...</div>
       ) : (
@@ -64,8 +83,8 @@ function ConsolePanel() {
               textColor = 'text-yellow-600';
               content = msg.text;
               break;
-            case "error":
-              textColor = "text-red-600";
+            case 'error':
+              textColor = 'text-red-600';
               content = msg.text;
               break;
             case 'log':
@@ -77,9 +96,9 @@ function ConsolePanel() {
             case 'table':
               content = <TableRenderer data={msg.data} />;
               break;
-            case "time":
-              content = `Timer ${msg.label}: ${msg.duration}ms`; // Format timing message
-              textColor = "text-blue-600"; // Distinct color for timing
+            case 'time':
+              content = `Timer ${msg.label}: ${msg.duration}ms`;
+              textColor = 'text-blue-600';
               break;
             default:
               content = msg.text || 'Unknown message type';
