@@ -1,6 +1,6 @@
-"use client";
 // components/Toolbar.tsx
-import { useRef, useState, useEffect } from "react";
+"use client";
+import { useRef, useState } from "react";
 import IconWithHover from "./IconWithHover";
 import { useThemeStore } from "@/store/themeStore";
 import { useEditorStore } from "@/store/editorStore";
@@ -9,22 +9,15 @@ import { toast } from "react-toastify";
 import { parse } from "acorn";
 import { IconTrash, IconFilter } from "@tabler/icons-react";
 
-export default function Toolbar() {
+interface ToolbarProps {
+  consolePanelRef: React.RefObject<{ runCode: (code: string) => void }>;
+}
+
+export default function Toolbar({ consolePanelRef }: ToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useThemeStore();
   const { content, setContent } = useEditorStore();
-  const { clearOutput, displayMode, toggleDisplayMode, startNewExecution, setLoading } = useConsoleStore();
-  const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
-
-  useEffect(() => {
-    const sandboxIframe = document.querySelector(
-      'iframe[title="Sandboxed Code Execution"]'
-    ) as HTMLIFrameElement | null;
-    console.log("Iframe found:", sandboxIframe);
-    if (sandboxIframe) {
-      setIframeRef(sandboxIframe);
-    }
-  }, []);
+  const { clearOutput, displayMode, toggleDisplayMode, setLoading } = useConsoleStore();
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
@@ -78,14 +71,8 @@ export default function Toolbar() {
 
   const handleRunCode = () => {
     if (content.trim().length === 0) return;
-    setLoading(true); // Set loading state to true
-    const executionId = startNewExecution();
-    console.log("Sending code to iframe:", content, "with executionId:", executionId);
-    if (iframeRef && iframeRef.contentWindow) {
-      iframeRef.contentWindow.postMessage({ code: content, executionId }, "*");
-    } else {
-      console.error("Iframe not available");
-    }
+    setLoading(true);
+    consolePanelRef.current?.runCode(content);
   };
 
   return (

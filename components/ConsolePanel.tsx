@@ -1,3 +1,4 @@
+// components/ConsolePanel.tsx
 import { forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
 import { useConsoleStore } from '@/store/consoleStore';
 import TableRenderer from './TableRenderer';
@@ -7,12 +8,12 @@ import { useSandbox } from '@/hooks/useSandbox';
 const ConsolePanel = forwardRef((props, ref) => {
   const { allExecutions, displayMode, addMessageToExecution, isLoading, setLoading } = useConsoleStore();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-
-  useSandbox(iframeRef);
+  const { startExecutionTimeout } = useSandbox(iframeRef);
 
   const runCode = (code: string) => {
     if (iframeRef.current) {
       const executionId = useConsoleStore.getState().startNewExecution();
+      startExecutionTimeout(executionId); // Start the 5-second timeout
       iframeRef.current.contentWindow?.postMessage({ code, executionId }, '*');
     }
   };
@@ -26,7 +27,6 @@ const ConsolePanel = forwardRef((props, ref) => {
       const data = event.data;
       console.log('ConsolePanel received message:', data);
 
-      // Handle array of messages (e.g., from window.onerror)
       if (Array.isArray(data)) {
         data.forEach((msgObj) => {
           if (msgObj.type === 'uncaught-error') {
@@ -125,7 +125,6 @@ const ConsolePanel = forwardRef((props, ref) => {
               break;
             default:
               content = msg.text || 'Unknown message type';
-              break;
           }
 
           return (

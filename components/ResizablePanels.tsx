@@ -5,14 +5,17 @@ import { useCodeMirror } from '@/hooks/useCodeMirror';
 import { useThemeStore } from '@/store/themeStore';
 import ConsolePanel from './ConsolePanel';
 
+interface ResizablePanelProps {
+  consolePanelRef: React.RefObject<{ runCode: (code: string) => void }>;
+}
+
 const MIN_WIDTH_VW = 24;
 const MAX_WIDTH_VW = 70;
 const INITIAL_WIDTH_VW = 48;
 
-export default function ResizablePanel() {
+export default function ResizablePanel({ consolePanelRef }: ResizablePanelProps) {
   const [windowWidth, setWindowWidth] = useState(0);
   const editorContainerRef = useRef<HTMLDivElement>(null);
-  const consolePanelRef = useRef<any>(null);
   const { editorView } = useCodeMirror(editorContainerRef);
   const { theme } = useThemeStore();
 
@@ -55,24 +58,12 @@ export default function ResizablePanel() {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const handleRunCode = () => {
-    const code = editorView?.state.doc.toString() || '';
-    if (code.trim().length === 0) return;
-    consolePanelRef.current?.runCode(code);
-  };
-
   return (
     <main
       className={`flex flex-1 w-screen overflow-hidden ${
         theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
       }`}
     >
-      <button
-        onClick={handleRunCode}
-        className="absolute top-4 left-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-      >
-        Run
-      </button>
       <animated.div
         className={`relative h-full w-full rounded-[7px] p-4 shadow-md md:h-full ${
           theme === 'dark'
