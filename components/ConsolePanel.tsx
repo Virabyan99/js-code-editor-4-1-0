@@ -1,17 +1,16 @@
-// components/ConsolePanel.tsx
 import { forwardRef, useImperativeHandle, useEffect, useRef, useState } from 'react';
 import { useConsoleStore } from '@/store/consoleStore';
 import TableRenderer from './TableRenderer';
 import DirRenderer from './DirRenderer';
 import { useSandbox } from '@/hooks/useSandbox';
-import PopupDisplay from './PopupDisplay'; // Import the new component
+import PopupDisplay from './PopupDisplay';
 
 const ConsolePanel = forwardRef((props, ref) => {
   const { allExecutions, displayMode, addMessageToExecution, isLoading, setLoading } = useConsoleStore();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { startExecutionTimeout } = useSandbox(iframeRef);
-  const [alertVisible, setAlertVisible] = useState(false); // NEW: State for popup visibility
-  const [alertMessage, setAlertMessage] = useState<string | null>(null); // NEW: State for popup message
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [popupPayload, setPopupPayload] = useState<{ mode: 'alert' | 'prompt' | 'confirm'; message: string; defaultValue?: string; id?: string; executionId?: string } | null>(null);
 
   const runCode = (code: string) => {
     if (iframeRef.current) {
@@ -30,10 +29,26 @@ const ConsolePanel = forwardRef((props, ref) => {
       const data = event.data;
       console.log('ConsolePanel received message:', data);
 
-      // NEW: Handle sandbox-alert messages
       if (data.type === 'sandbox-alert') {
-        setAlertMessage(data.text);
-        setAlertVisible(true);
+        setPopupPayload({ mode: 'alert', message: data.text });
+        setPopupVisible(true);
+      } else if (data.type === 'sandbox-prompt') {
+        setPopupPayload({
+          mode: 'prompt',
+          message: data.text,
+          defaultValue: data.defaultValue,
+          id: data.promptId,
+          executionId: data.executionId,
+        });
+        setPopupVisible(true);
+      } else if (data.type === 'sandbox-confirm') {
+        setPopupPayload({
+          mode: 'confirm',
+          message: data.text,
+          id: data.confirmId,
+          executionId: data.executionId,
+        });
+        setPopupVisible(true);
       } else if (Array.isArray(data)) {
         data.forEach((msgObj) => {
           if (msgObj.type === 'uncaught-error') {
@@ -76,6 +91,28 @@ const ConsolePanel = forwardRef((props, ref) => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [addMessageToExecution, setLoading]);
+
+  const handlePopupClose = (result?: string | boolean | null) => {
+    setPopupVisible(false);
+    if (popupPayload) {
+      if (popupPayload.mode === 'prompt' && popupPayload.id) {
+        iframeRef.current?.contentWindow?.postMessage({
+          type: 'sandbox-prompt-response',
+          promptId: popupPayload.id,
+          result: typeof result === 'string' ? result : null,
+          executionId: popupPayload.executionId,
+        }, '*');
+      } else if (popupPayload.mode === 'confirm' && popupPayload.id) {
+        iframeRef.current?.contentWindow?.postMessage({
+          type: 'sandbox-confirm-response',
+          confirmId: popupPayload.id,
+          result: result === true,
+          executionId: popupPayload.executionId,
+        }, '*');
+      }
+    }
+    setPopupPayload(null);
+  };
 
   const displayedMessages =
     displayMode === 'all'
@@ -141,11 +178,10 @@ const ConsolePanel = forwardRef((props, ref) => {
           );
         })
       )}
-      {/* NEW: Render the PopupDisplay component */}
       <PopupDisplay
-        visible={alertVisible}
-        message={alertMessage}
-        onClose={() => setAlertVisible(false)}
+        visible={popupVisible}
+        payload={popupPayload}
+        onClose={handlePopupClose}
       />
     </div>
   );

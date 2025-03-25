@@ -12,6 +12,7 @@
       let nextTimerId = 0;
       let timerCallbacks = {};
       let timerMap = {}; // For console.time tracking per execution
+      const pendingResponses = new Map(); // To store resolve functions for prompts/confirms
 
       function generateTimerId() {
         return 'timer_' + nextTimerId++;
@@ -175,7 +176,7 @@
         return false; // Allow browser to log the error as well
       };
 
-      // Override alert (NEW!)
+      // Override alert
       const originalAlert = window.alert;
       window.alert = (message) => {
         window.parent.postMessage({
@@ -184,29 +185,84 @@
         }, '*');
       };
 
+      // Override prompt with promise-based approach
+      const originalPrompt = window.prompt;
+      window.prompt = (message, defaultValue) => {
+        const promptId = Math.random().toString(36).slice(2);
+        window.parent.postMessage({
+          type: 'sandbox-prompt',
+          promptId,
+          text: String(message),
+          defaultValue: defaultValue == null ? '' : String(defaultValue),
+          executionId: currentExecutionId,
+        }, '*');
+        return new Promise((resolve) => {
+          pendingResponses.set(promptId, resolve);
+        });
+      };
+
+      // Override confirm with promise-based approach
+      const originalConfirm = window.confirm;
+      window.confirm = (message) => {
+        const confirmId = Math.random().toString(36).slice(2);
+        window.parent.postMessage({
+          type: 'sandbox-confirm',
+          confirmId,
+          text: String(message),
+          executionId: currentExecutionId,
+        }, '*');
+        return new Promise((resolve) => {
+          pendingResponses.set(confirmId, resolve);
+        });
+      };
+
+      // Generator-based execution runner
+      async function runGenerator(code) {
+        const userFunction = new Function(`
+          return (function*() {
+            ${code}
+          })();
+        `)();
+
+        let iterator = userFunction;
+        let result = iterator.next();
+
+        while (!result.done) {
+          if (result.value instanceof Promise) {
+            const value = await result.value;
+            result = iterator.next(value);
+          } else {
+            result = iterator.next();
+          }
+        }
+      }
+
       // Main message listener for code execution and timer firing
       window.addEventListener('message', (event) => {
-        if (event.data && event.data.code && event.data.executionId) {
-          currentExecutionId = event.data.executionId;
-          const codeToRun = event.data.code;
-          try {
-            const runnable = new Function(codeToRun);
-            runnable();
-          } catch (err) {
-            window.parent.postMessage({
-              type: 'console',
-              subtype: 'error',
-              text: `Error: ${err.message}`,
-              stack: err.stack || null,
-              executionId: currentExecutionId
-            }, '*');
-          } finally {
-            window.parent.postMessage({
-              type: 'execution-finished',
-              executionId: currentExecutionId
-            }, '*');
-            currentExecutionId = null;
-          }
+  if (event.data && event.data.code && event.data.executionId) {
+    currentExecutionId = event.data.executionId;
+    const codeToRun = event.data.code;
+    (async () => {
+      try {
+        // Wrap the user's code in an async function
+        const asyncWrapper = new Function('return (async () => { ' + codeToRun + ' })();');
+        await asyncWrapper();
+      } catch (err) {
+        window.parent.postMessage({
+          type: 'console',
+          subtype: 'error',
+          text: `Error: ${err.message}`,
+          stack: err.stack || null,
+          executionId: currentExecutionId
+        }, '*');
+      } finally {
+        window.parent.postMessage({
+          type: 'execution-finished',
+          executionId: currentExecutionId
+        }, '*');
+        currentExecutionId = null;
+      }
+    })();
         } else if (event.data && event.data.type === 'sandbox-timer-fire') {
           const { tempId } = event.data;
           const callback = timerCallbacks[tempId];
@@ -215,6 +271,20 @@
             currentExecutionId = timerExecutionIds[tempId];
             callback();
             currentExecutionId = savedExecutionId;
+          }
+        } else if (event.data.type === 'sandbox-prompt-response') {
+          const { promptId, result } = event.data;
+          const resolve = pendingResponses.get(promptId);
+          if (resolve) {
+            resolve(result);
+            pendingResponses.delete(promptId);
+          }
+        } else if (event.data.type === 'sandbox-confirm-response') {
+          const { confirmId, result } = event.data;
+          const resolve = pendingResponses.get(confirmId);
+          if (resolve) {
+            resolve(result);
+            pendingResponses.delete(confirmId);
           }
         }
       });
