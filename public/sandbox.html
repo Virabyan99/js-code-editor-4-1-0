@@ -7,122 +7,187 @@
   </head>
   <body>
     <script>
-      window.addEventListener('message', (event) => {
-        const originalConsoleLog = console.log; // For debugging
-        originalConsoleLog('Message received in sandbox:', event.data);
+      let currentExecutionId = null;
+      let timerExecutionIds = {};
+      let nextTimerId = 0;
+      let timerCallbacks = {};
+      let timerMap = {}; // For console.time tracking per execution
 
-        const parentWindow = event.source;
-        const parentOrigin = event.origin;
-        const codeToRun = event.data;
+      function generateTimerId() {
+        return 'timer_' + nextTimerId++;
+      }
 
-        let messages = [];
-        let timerMap = {};
+      // Persistent console overrides
+      const originalLog = console.log;
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      const originalDir = console.dir;
+      const originalTable = console.table;
+      const originalTime = console.time;
+      const originalTimeEnd = console.timeEnd;
 
-        // Store original methods
-        const originalLog = console.log;
-        const originalError = console.error;
-        const originalWarn = console.warn;
-        const originalDir = console.dir;
-        const originalTable = console.table;
-        const originalTime = console.time;
-        const originalTimeEnd = console.timeEnd;
-
-        // Override console.log (optional: remove originalLog if not needed)
-        console.log = (...args) => {
+      console.log = (...args) => {
+        if (currentExecutionId) {
           const text = args.join(' ');
-          messages.push({ type: 'log', text });
-          // originalLog(...args); // Comment out to avoid browser console
-        };
+          window.parent.postMessage({ type: 'console', subtype: 'log', text, executionId: currentExecutionId }, '*');
+        } else {
+          originalLog(...args);
+        }
+      };
 
-        // Override console.error
-        console.error = (...args) => {
+      console.error = (...args) => {
+        if (currentExecutionId) {
           const text = args.join(' ');
-          messages.push({ type: 'error', text });
-          // originalError(...args);
-        };
+          window.parent.postMessage({ type: 'console', subtype: 'error', text, executionId: currentExecutionId }, '*');
+        } else {
+          originalError(...args);
+        }
+      };
 
-        // Override console.warn
-        console.warn = (...args) => {
+      console.warn = (...args) => {
+        if (currentExecutionId) {
           const text = args.join(' ');
-          messages.push({ type: 'warn', text });
-          // originalWarn(...args);
-        };
+          window.parent.postMessage({ type: 'console', subtype: 'warn', text, executionId: currentExecutionId }, '*');
+        } else {
+          originalWarn(...args);
+        }
+      };
 
-        // Override console.dir
-        console.dir = (obj) => {
+      console.dir = (obj) => {
+        if (currentExecutionId) {
           let serialized;
           try {
             serialized = JSON.stringify(obj, null, 2);
           } catch (error) {
             serialized = 'Unserializable object';
           }
-          messages.push({ type: 'dir', data: serialized });
-          // originalDir(obj);
-        };
+          window.parent.postMessage({ type: 'console', subtype: 'dir', data: serialized, executionId: currentExecutionId }, '*');
+        } else {
+          originalDir(obj);
+        }
+      };
 
-        // Override console.table
-        console.table = (tabularData) => {
+      console.table = (tabularData) => {
+        if (currentExecutionId) {
           let tablePayload;
           try {
             tablePayload = JSON.parse(JSON.stringify(tabularData));
           } catch (error) {
             tablePayload = String(tabularData);
           }
-          messages.push({ type: 'table', data: tablePayload });
-          // originalTable(tabularData);
-        };
-
-        // Override console.time
-        console.time = (label = "default") => {
-          originalConsoleLog('Starting timer for label:', label); // Debug
-          timerMap[label] = performance.now();
-          // Do NOT call originalTime(label) to avoid browser console
-        };
-
-        // Override console.timeEnd
-        console.timeEnd = (label = "default") => {
-          originalConsoleLog('Ending timer for label:', label); // Debug
-          if (timerMap[label] !== undefined) {
-            const duration = performance.now() - timerMap[label];
-            const timeMessage = {
-              type: 'time',
-              label,
-              duration: duration.toFixed(2)
-            };
-            messages.push(timeMessage);
-            originalConsoleLog('Pushed time message:', timeMessage); // Debug
-            delete timerMap[label];
-          } else {
-            messages.push({
-              type: 'warn',
-              text: `No such label '${label}' for console.timeEnd()`
-            });
-          }
-          // Do NOT call originalTimeEnd(label) to avoid browser console
-        };
-
-        try {
-          const runnable = new Function(codeToRun);
-          const result = runnable();
-          if (result !== undefined) {
-            messages.push({ type: 'log', text: String(result) });
-          }
-        } catch (err) {
-          messages.push({ type: 'error', text: `Error: ${err.message}` });
+          window.parent.postMessage({ type: 'console', subtype: 'table', data: tablePayload, executionId: currentExecutionId }, '*');
+        } else {
+          originalTable(tabularData);
         }
+      };
 
-        // Restore original methods
-        console.log = originalLog;
-        console.error = originalError;
-        console.warn = originalWarn;
-        console.dir = originalDir;
-        console.table = originalTable;
-        console.time = originalTime;
-        console.timeEnd = originalTimeEnd;
+      console.time = (label = 'default') => {
+        if (currentExecutionId) {
+          if (!timerMap[currentExecutionId]) {
+            timerMap[currentExecutionId] = {};
+          }
+          timerMap[currentExecutionId][label] = performance.now();
+        } else {
+          originalTime(label);
+        }
+      };
 
-        // Debug log before sending
-        originalConsoleLog('Sending messages:', messages);
-        parentWindow.postMessage(messages, parentOrigin);
+      console.timeEnd = (label = 'default') => {
+        if (currentExecutionId && timerMap[currentExecutionId] && timerMap[currentExecutionId][label] !== undefined) {
+          const duration = performance.now() - timerMap[currentExecutionId][label];
+          window.parent.postMessage({
+            type: 'console',
+            subtype: 'time',
+            label,
+            duration: duration.toFixed(2),
+            executionId: currentExecutionId,
+          }, '*');
+          delete timerMap[currentExecutionId][label];
+        } else {
+          originalTimeEnd(label);
+        }
+      };
+
+      // Override timer functions persistently
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = (callback, delay = 0, ...args) => {
+        const tempId = generateTimerId();
+        timerCallbacks[tempId] = () => callback(...args);
+        timerExecutionIds[tempId] = currentExecutionId;
+        window.parent.postMessage({
+          type: 'sandbox-timer-create',
+          timerType: 'timeout',
+          delay,
+          tempId
+        }, '*');
+        return tempId;
+      };
+
+      const originalSetInterval = window.setInterval;
+      window.setInterval = (callback, interval = 0, ...args) => {
+        const tempId = generateTimerId();
+        timerCallbacks[tempId] = () => callback(...args);
+        timerExecutionIds[tempId] = currentExecutionId;
+        window.parent.postMessage({
+          type: 'sandbox-timer-create',
+          timerType: 'interval',
+          delay: interval,
+          tempId
+        }, '*');
+        return tempId;
+      };
+
+      window.clearTimeout = (timerId) => {
+        if (timerCallbacks[timerId]) {
+          delete timerCallbacks[timerId];
+          delete timerExecutionIds[timerId];
+          window.parent.postMessage({
+            type: 'sandbox-timer-clear',
+            timerType: 'timeout',
+            timerId
+          }, '*');
+        }
+      };
+
+      window.clearInterval = (timerId) => {
+        if (timerCallbacks[timerId]) {
+          delete timerCallbacks[timerId];
+          delete timerExecutionIds[timerId];
+          window.parent.postMessage({
+            type: 'sandbox-timer-clear',
+            timerType: 'interval',
+            timerId
+          }, '*');
+        }
+      };
+
+      // Main message listener for code execution and timer firing
+      window.addEventListener('message', (event) => {
+        if (event.data && event.data.code && event.data.executionId) {
+          currentExecutionId = event.data.executionId;
+          const codeToRun = event.data.code;
+          try {
+            const runnable = new Function(codeToRun);
+            runnable();
+          } catch (err) {
+            window.parent.postMessage({
+              type: 'console',
+              subtype: 'error',
+              text: `Error: ${err.message}`,
+              executionId: currentExecutionId
+            }, '*');
+          }
+          currentExecutionId = null;
+        } else if (event.data && event.data.type === 'sandbox-timer-fire') {
+          const { tempId } = event.data;
+          const callback = timerCallbacks[tempId];
+          if (callback) {
+            const savedExecutionId = currentExecutionId;
+            currentExecutionId = timerExecutionIds[tempId];
+            callback();
+            currentExecutionId = savedExecutionId;
+          }
+        }
       });
     </script>
   </body>

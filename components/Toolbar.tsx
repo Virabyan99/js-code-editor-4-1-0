@@ -13,7 +13,7 @@ export default function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useThemeStore();
   const { content, setContent } = useEditorStore();
-  const { clearOutput, displayMode, toggleDisplayMode } = useConsoleStore();
+  const { clearOutput, displayMode, toggleDisplayMode, startNewExecution } = useConsoleStore();
   const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
   // Get a reference to the sandbox iframe
@@ -79,10 +79,12 @@ export default function Toolbar() {
 
   const handleRunCode = () => {
     if (content.trim().length === 0) return;
-    // Removed clearOutput() to preserve execution history
-    console.log("Sending code to iframe:", content, "Iframe ref:", iframeRef);
+    const executionId = startNewExecution();
+    console.log("Sending code to iframe:", content, "with executionId:", executionId);
     if (iframeRef && iframeRef.contentWindow) {
-      iframeRef.contentWindow.postMessage(content, "*");
+      iframeRef.contentWindow.postMessage({ code: content, executionId }, "*");
+    } else {
+      console.error("Iframe not available");
     }
   };
 

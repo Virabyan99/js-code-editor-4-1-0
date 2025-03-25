@@ -1,4 +1,3 @@
-// components/ResizablePanels.tsx
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useSpring, animated } from 'react-spring';
@@ -13,6 +12,7 @@ const INITIAL_WIDTH_VW = 48;
 export default function ResizablePanel() {
   const [windowWidth, setWindowWidth] = useState(0);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const consolePanelRef = useRef<any>(null);
   const { editorView } = useCodeMirror(editorContainerRef);
   const { theme } = useThemeStore();
 
@@ -55,12 +55,24 @@ export default function ResizablePanel() {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const handleRunCode = () => {
+    const code = editorView?.state.doc.toString() || '';
+    if (code.trim().length === 0) return;
+    consolePanelRef.current?.runCode(code);
+  };
+
   return (
     <main
       className={`flex flex-1 w-screen overflow-hidden ${
         theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
       }`}
     >
+      <button
+        onClick={handleRunCode}
+        className="absolute top-4 left-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
+        Run
+      </button>
       <animated.div
         className={`relative h-full w-full rounded-[7px] p-4 shadow-md md:h-full ${
           theme === 'dark'
@@ -74,13 +86,11 @@ export default function ResizablePanel() {
               : '100%',
         }}
       >
-        <div className={`absolute w-2 h-2  z-20 bottom-4 right-4 ${
-          theme === 'dark'
-            ? 'bg-gray-700 '
-            : 'bg-gray-100'
-        }`}>
-
-        </div>
+        <div
+          className={`absolute w-2 h-2 z-20 bottom-4 right-4 ${
+            theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+          }`}
+        ></div>
         <div
           ref={editorContainerRef}
           className={`h-full overflow-hidden text-[16px] font-fira theme-${theme}`}
@@ -99,7 +109,7 @@ export default function ResizablePanel() {
           theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
         }`}
       >
-        <ConsolePanel />
+        <ConsolePanel ref={consolePanelRef} />
       </div>
     </main>
   );

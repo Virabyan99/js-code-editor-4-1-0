@@ -1,33 +1,45 @@
-// store/consoleStore.ts
-import { create } from "zustand";
+import { create } from 'zustand';
 
-// Define the message object structure
 export type ConsoleMessage =
-  | { type: "log" | "warn" | "error"; text: string }
-  | { type: "dir"; data: string }       // JSON string for console.dir
-  | { type: "table"; data: any }        // Object or array for console.table
-  | { type: "time"; label: string; duration: string }; // New type for timing
+  | { type: 'log' | 'warn' | 'error'; text: string }
+  | { type: 'dir'; data: string }
+  | { type: 'table'; data: any }
+  | { type: 'time'; label: string; duration: string };
 
-// Define the console state interface
-interface ConsoleState {
-  allExecutions: ConsoleMessage[][]; // Array of executions, each containing an array of messages
-  displayMode: "all" | "lastOnly";   // Toggle between showing all or last execution
-  addExecutionOutput: (messages: ConsoleMessage[]) => void; // Add output from a single execution
-  clearOutput: () => void;          // Clear all executions
-  toggleDisplayMode: () => void;    // Switch display mode
+interface Execution {
+  id: string;
+  messages: ConsoleMessage[];
 }
 
-// Create Zustand store
+interface ConsoleState {
+  allExecutions: Execution[];
+  displayMode: 'all' | 'lastOnly';
+  startNewExecution: () => string;
+  addMessageToExecution: (executionId: string, message: ConsoleMessage) => void;
+  clearOutput: () => void;
+  toggleDisplayMode: () => void;
+}
+
 export const useConsoleStore = create<ConsoleState>((set) => ({
   allExecutions: [],
-  displayMode: "all", // Default to showing all messages
-  addExecutionOutput: (messages) =>
-    set((state) => ({
-      allExecutions: [...state.allExecutions, messages],
-    })),
+  displayMode: 'all',
+  startNewExecution: () => {
+    const executionId = Date.now().toString();
+    set((state) => ({ allExecutions: [...state.allExecutions, { id: executionId, messages: [] }] }));
+    return executionId;
+  },
+  addMessageToExecution: (executionId, message) => {
+    set((state) => {
+      const executions = state.allExecutions.map((exec) => {
+        if (exec.id === executionId) {
+          return { ...exec, messages: [...exec.messages, message] };
+        }
+        return exec;
+      });
+      return { allExecutions: executions };
+    });
+  },
   clearOutput: () => set({ allExecutions: [] }),
   toggleDisplayMode: () =>
-    set((state) => ({
-      displayMode: state.displayMode === "all" ? "lastOnly" : "all",
-    })),
+    set((state) => ({ displayMode: state.displayMode === 'all' ? 'lastOnly' : 'all' })),
 }));
