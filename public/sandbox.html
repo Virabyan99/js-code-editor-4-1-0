@@ -176,8 +176,13 @@
               text: `Error: ${err.message}`,
               executionId: currentExecutionId
             }, '*');
+          } finally {
+            window.parent.postMessage({
+              type: 'execution-finished',
+              executionId: currentExecutionId
+            }, '*');
+            currentExecutionId = null;
           }
-          currentExecutionId = null;
         } else if (event.data && event.data.type === 'sandbox-timer-fire') {
           const { tempId } = event.data;
           const callback = timerCallbacks[tempId];

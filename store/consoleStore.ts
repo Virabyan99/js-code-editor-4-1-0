@@ -1,3 +1,4 @@
+// store/consoleStore.ts
 import { create } from 'zustand';
 
 export type ConsoleMessage =
@@ -14,15 +15,18 @@ interface Execution {
 interface ConsoleState {
   allExecutions: Execution[];
   displayMode: 'all' | 'lastOnly';
+  isLoading: boolean; // Added for loading state
   startNewExecution: () => string;
   addMessageToExecution: (executionId: string, message: ConsoleMessage) => void;
   clearOutput: () => void;
   toggleDisplayMode: () => void;
+  setLoading: (loading: boolean) => void; // Added to set loading state
 }
 
 export const useConsoleStore = create<ConsoleState>((set) => ({
   allExecutions: [],
   displayMode: 'all',
+  isLoading: false, // Initialize loading state
   startNewExecution: () => {
     const executionId = Date.now().toString();
     set((state) => ({ allExecutions: [...state.allExecutions, { id: executionId, messages: [] }] }));
@@ -42,4 +46,5 @@ export const useConsoleStore = create<ConsoleState>((set) => ({
   clearOutput: () => set({ allExecutions: [] }),
   toggleDisplayMode: () =>
     set((state) => ({ displayMode: state.displayMode === 'all' ? 'lastOnly' : 'all' })),
+  setLoading: (loading) => set({ isLoading: loading }), // Function to update loading state
 }));

@@ -13,15 +13,14 @@ export default function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme } = useThemeStore();
   const { content, setContent } = useEditorStore();
-  const { clearOutput, displayMode, toggleDisplayMode, startNewExecution } = useConsoleStore();
+  const { clearOutput, displayMode, toggleDisplayMode, startNewExecution, setLoading } = useConsoleStore();
   const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
-  // Get a reference to the sandbox iframe
   useEffect(() => {
     const sandboxIframe = document.querySelector(
       'iframe[title="Sandboxed Code Execution"]'
     ) as HTMLIFrameElement | null;
-    console.log("Iframe found:", sandboxIframe); // Debug log
+    console.log("Iframe found:", sandboxIframe);
     if (sandboxIframe) {
       setIframeRef(sandboxIframe);
     }
@@ -79,6 +78,7 @@ export default function Toolbar() {
 
   const handleRunCode = () => {
     if (content.trim().length === 0) return;
+    setLoading(true); // Set loading state to true
     const executionId = startNewExecution();
     console.log("Sending code to iframe:", content, "with executionId:", executionId);
     if (iframeRef && iframeRef.contentWindow) {
@@ -128,13 +128,11 @@ export default function Toolbar() {
         className="flex items-center w-fit h-fit"
         onClick={() => clearOutput()}
       />
-      {/* Toggle display mode button */}
       <IconWithHover
         variant="filter"
         className="flex items-center w-fit h-fit"
         onClick={toggleDisplayMode}
       />
-      {/* Label to indicate current mode */}
       <span className="text-sm ml-2">
         {displayMode === "all" ? "Showing All" : "Showing Last Only"}
       </span>
