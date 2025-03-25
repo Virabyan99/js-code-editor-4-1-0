@@ -161,8 +161,6 @@
         }
       };
 
-      
-
       // Add global error handler
       window.onerror = function (message, source, lineno, colno, error) {
         const errorData = {
@@ -175,6 +173,15 @@
         };
         window.parent.postMessage([errorData], '*');
         return false; // Allow browser to log the error as well
+      };
+
+      // Override alert (NEW!)
+      const originalAlert = window.alert;
+      window.alert = (message) => {
+        window.parent.postMessage({
+          type: 'sandbox-alert',
+          text: String(message),
+        }, '*');
       };
 
       // Main message listener for code execution and timer firing

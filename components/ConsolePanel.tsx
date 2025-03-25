@@ -1,14 +1,17 @@
 // components/ConsolePanel.tsx
-import { forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
+import { forwardRef, useImperativeHandle, useEffect, useRef, useState } from 'react';
 import { useConsoleStore } from '@/store/consoleStore';
 import TableRenderer from './TableRenderer';
 import DirRenderer from './DirRenderer';
 import { useSandbox } from '@/hooks/useSandbox';
+import PopupDisplay from './PopupDisplay'; // Import the new component
 
 const ConsolePanel = forwardRef((props, ref) => {
   const { allExecutions, displayMode, addMessageToExecution, isLoading, setLoading } = useConsoleStore();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { startExecutionTimeout } = useSandbox(iframeRef);
+  const [alertVisible, setAlertVisible] = useState(false); // NEW: State for popup visibility
+  const [alertMessage, setAlertMessage] = useState<string | null>(null); // NEW: State for popup message
 
   const runCode = (code: string) => {
     if (iframeRef.current) {
@@ -27,7 +30,11 @@ const ConsolePanel = forwardRef((props, ref) => {
       const data = event.data;
       console.log('ConsolePanel received message:', data);
 
-      if (Array.isArray(data)) {
+      // NEW: Handle sandbox-alert messages
+      if (data.type === 'sandbox-alert') {
+        setAlertMessage(data.text);
+        setAlertVisible(true);
+      } else if (Array.isArray(data)) {
         data.forEach((msgObj) => {
           if (msgObj.type === 'uncaught-error') {
             addMessageToExecution(msgObj.executionId || currentExecutionId, {
@@ -134,6 +141,12 @@ const ConsolePanel = forwardRef((props, ref) => {
           );
         })
       )}
+      {/* NEW: Render the PopupDisplay component */}
+      <PopupDisplay
+        visible={alertVisible}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </div>
   );
 });
