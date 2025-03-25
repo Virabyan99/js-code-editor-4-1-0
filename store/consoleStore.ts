@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 
 export type ConsoleMessage =
-  | { type: 'log' | 'warn' | 'error'; text: string }
+  | { type: 'log' | 'warn' | 'error'; text: string; stack?: string | null }
   | { type: 'dir'; data: string }
   | { type: 'table'; data: any }
   | { type: 'time'; label: string; duration: string };
@@ -15,18 +15,18 @@ interface Execution {
 interface ConsoleState {
   allExecutions: Execution[];
   displayMode: 'all' | 'lastOnly';
-  isLoading: boolean; // Added for loading state
+  isLoading: boolean;
   startNewExecution: () => string;
   addMessageToExecution: (executionId: string, message: ConsoleMessage) => void;
   clearOutput: () => void;
   toggleDisplayMode: () => void;
-  setLoading: (loading: boolean) => void; // Added to set loading state
+  setLoading: (loading: boolean) => void;
 }
 
 export const useConsoleStore = create<ConsoleState>((set) => ({
   allExecutions: [],
   displayMode: 'all',
-  isLoading: false, // Initialize loading state
+  isLoading: false,
   startNewExecution: () => {
     const executionId = Date.now().toString();
     set((state) => ({ allExecutions: [...state.allExecutions, { id: executionId, messages: [] }] }));
@@ -46,5 +46,5 @@ export const useConsoleStore = create<ConsoleState>((set) => ({
   clearOutput: () => set({ allExecutions: [] }),
   toggleDisplayMode: () =>
     set((state) => ({ displayMode: state.displayMode === 'all' ? 'lastOnly' : 'all' })),
-  setLoading: (loading) => set({ isLoading: loading }), // Function to update loading state
+  setLoading: (loading) => set({ isLoading: loading }),
 }));

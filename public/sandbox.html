@@ -161,6 +161,22 @@
         }
       };
 
+      
+
+      // Add global error handler
+      window.onerror = function (message, source, lineno, colno, error) {
+        const errorData = {
+          type: 'uncaught-error',
+          message: String(message),
+          source: String(source),
+          lineno,
+          colno,
+          stack: error && error.stack ? String(error.stack) : null,
+        };
+        window.parent.postMessage([errorData], '*');
+        return false; // Allow browser to log the error as well
+      };
+
       // Main message listener for code execution and timer firing
       window.addEventListener('message', (event) => {
         if (event.data && event.data.code && event.data.executionId) {
@@ -174,6 +190,7 @@
               type: 'console',
               subtype: 'error',
               text: `Error: ${err.message}`,
+              stack: err.stack || null,
               executionId: currentExecutionId
             }, '*');
           } finally {

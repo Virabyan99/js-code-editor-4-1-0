@@ -25,14 +25,28 @@ const ConsolePanel = forwardRef((props, ref) => {
 
       const data = event.data;
       console.log('ConsolePanel received message:', data);
-      if (data.type === 'console') {
-        const { subtype, text, data: msgData, label, duration, executionId } = data;
+
+      // Handle array of messages (e.g., from window.onerror)
+      if (Array.isArray(data)) {
+        data.forEach((msgObj) => {
+          if (msgObj.type === 'uncaught-error') {
+            addMessageToExecution(msgObj.executionId || currentExecutionId, {
+              type: 'error',
+              text: `Uncaught Error: ${msgObj.message}`,
+              stack: msgObj.stack,
+            });
+          }
+        });
+      } else if (data.type === 'console') {
+        const { subtype, text, data: msgData, label, duration, executionId, stack } = data;
         let message;
         switch (subtype) {
           case 'log':
           case 'warn':
-          case 'error':
             message = { type: subtype, text };
+            break;
+          case 'error':
+            message = { type: 'error', text, stack };
             break;
           case 'dir':
             message = { type: 'dir', data: msgData };
@@ -48,7 +62,7 @@ const ConsolePanel = forwardRef((props, ref) => {
         }
         addMessageToExecution(executionId, message);
       } else if (data.type === 'execution-finished') {
-        setLoading(false); // Set loading to false when execution finishes
+        setLoading(false);
       }
     }
 
@@ -85,7 +99,16 @@ const ConsolePanel = forwardRef((props, ref) => {
               break;
             case 'error':
               textColor = 'text-red-600';
-              content = msg.text;
+              if (msg.stack) {
+                content = (
+                  <div>
+                    <div>{msg.text}</div>
+                    <pre className="whitespace-pre-wrap text-sm mt-1">{msg.stack}</pre>
+                  </div>
+                );
+              } else {
+                content = msg.text;
+              }
               break;
             case 'log':
               content = msg.text;
