@@ -115,6 +115,7 @@ function ArrayRenderer({
               setExpanded(true);
             }}
             className={`${expandButtonClass} underline`}
+            aria-label={`Expand ${data.length - maxItems} more array items`}
           >
             Expand {data.length - maxItems} more...
           </button>
@@ -167,6 +168,7 @@ function ObjectRenderer({
               setExpanded(true);
             }}
             className={`${expandButtonClass} underline`}
+            aria-label={`Expand ${entries.length - maxItems} more object properties`}
           >
             Expand {entries.length - maxItems} more...
           </button>

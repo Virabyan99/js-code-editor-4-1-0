@@ -199,7 +199,11 @@ const ConsolePanel = forwardRef((props, ref) => {
           Running...
         </div>
       )}
-      <div className={`flex-1 overflow-auto p-2 custom-scrollbar ${theme === 'dark' ? 'dark' : ''}`}>
+      <div className={`flex-1 overflow-auto p-2 custom-scrollbar ${theme === 'dark' ? 'dark' : ''}`}
+      role="log"
+      aria-live="polite"
+      aria-label="Console output"
+      >
         {displayedMessages.length === 0 ? (
           <div
             className={`${
