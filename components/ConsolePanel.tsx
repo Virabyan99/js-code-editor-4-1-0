@@ -1,7 +1,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useRef, useState } from 'react';
 import { useConsoleStore } from '@/store/consoleStore';
-import TableRenderer from './TableRenderer';
-import DirRenderer from './DirRenderer';
+import ComplexDataRenderer from './ComplexDataRenderer'; // Import the new component
 import { useSandbox } from '@/hooks/useSandbox';
 import PopupDisplay from './PopupDisplay';
 
@@ -158,10 +157,20 @@ const ConsolePanel = forwardRef((props, ref) => {
               content = msg.text;
               break;
             case 'dir':
-              content = <DirRenderer dataString={msg.data} />;
+              try {
+                const parsed = JSON.parse(msg.data);
+                content = <ComplexDataRenderer data={parsed} />;
+              } catch {
+                content = <span>{msg.data}</span>; // Fallback if parsing fails
+              }
               break;
             case 'table':
-              content = <TableRenderer data={msg.data} />;
+              try {
+                const parsed = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+                content = <ComplexDataRenderer data={parsed} />;
+              } catch {
+                content = <span>{String(msg.data)}</span>; // Fallback if parsing fails
+              }
               break;
             case 'time':
               content = `Timer ${msg.label}: ${msg.duration}ms`;
