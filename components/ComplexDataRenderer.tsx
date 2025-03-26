@@ -1,9 +1,12 @@
 // components/ComplexDataRenderer.tsx
-import React from "react";
+import React, { useState } from "react";
+import { useThemeStore } from '@/store/themeStore';
 
 interface ComplexDataRendererProps {
-  data: any; // The nested data from console.dir or console.table
-  level?: number; // For indentation or nesting depth
+  data: any;
+  level?: number;
+  visited?: WeakSet<object>; // Track visited objects for circular references
+  maxItems?: number; // Limit for truncation
 }
 
 // Helper function to check if the value is a plain object
@@ -19,47 +22,156 @@ function isArray(val: any): boolean {
 export default function ComplexDataRenderer({
   data,
   level = 0,
+  visited,
+  maxItems = 200, // Default to 200 items before truncation
 }: ComplexDataRendererProps) {
-  // Base case: If data is null or a primitive, render it as plain text
+  // Create a local WeakSet if not provided (for top-level calls)
+  const localVisited = visited || new WeakSet<object>();
+  const { theme } = useThemeStore();
+
+  // Define text color class based on theme
+  const textColorClass = theme === 'dark' ? 'text-gray-100' : 'text-gray-800';
+
+  // Base case: Render null or primitives as plain text
   if (data === null || typeof data !== "object") {
-    return <span>{String(data)}</span>;
+    return <span className={textColorClass}>{String(data)}</span>;
   }
 
-  // Case 1: If data is an array, render it as a collapsible list
+  // Check for circular reference
+  if (localVisited.has(data)) {
+    return <span className={textColorClass}>[Circular]</span>;
+  }
+
+  // Mark this object as visited
+  localVisited.add(data);
+
+  // Render arrays with truncation
   if (isArray(data)) {
     return (
-      <details style={{ paddingLeft: `${level * 12}px` }}>
-        <summary>Array[{data.length}]</summary>
-        <div style={{ marginLeft: "20px" }}>
-          {data.map((item: any, idx: number) => (
-            <div key={idx}>
-              <strong>[{idx}]: </strong>
-              <ComplexDataRenderer data={item} level={level + 1} />
-            </div>
-          ))}
-        </div>
-      </details>
+      <ArrayRenderer
+        data={data}
+        level={level}
+        visited={localVisited}
+        maxItems={maxItems}
+      />
     );
   }
 
-  // Case 2: If data is an object, render its properties as key-value pairs
+  // Render objects with truncation
   if (isObject(data)) {
-    const entries = Object.entries(data);
     return (
-      <details style={{ paddingLeft: `${level * 12}px` }}>
-        <summary>Object</summary>
-        <div style={{ marginLeft: "20px" }}>
-          {entries.map(([key, val], idx) => (
-            <div key={idx}>
-              <strong>{key}: </strong>
-              <ComplexDataRenderer data={val} level={level + 1} />
-            </div>
-          ))}
-        </div>
-      </details>
+      <ObjectRenderer
+        data={data}
+        level={level}
+        visited={localVisited}
+        maxItems={maxItems}
+      />
     );
   }
 
   // Fallback: Render unexpected data as a string
-  return <span>{String(data)}</span>;
+  return <span className={textColorClass}>{String(data)}</span>;
+}
+
+// Component to render arrays with truncation
+function ArrayRenderer({
+  data,
+  level,
+  visited,
+  maxItems,
+}: {
+  data: any[];
+  level: number;
+  visited: WeakSet<object>;
+  maxItems: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const { theme } = useThemeStore();
+  const shouldTruncate = data.length > maxItems && !expanded;
+  const itemsToShow = shouldTruncate ? data.slice(0, maxItems) : data;
+
+  // Define button color based on theme
+  const expandButtonClass = theme === 'dark' ? 'text-blue-300' : 'text-blue-500';
+
+  return (
+    <details style={{ paddingLeft: `${level * 12}px` }}>
+      <summary>Array[{data.length}]</summary>
+      <div style={{ marginLeft: "20px" }}>
+        {itemsToShow.map((item, idx) => (
+          <div key={idx}>
+            <strong>[{idx}]: </strong>
+            <ComplexDataRenderer
+              data={item}
+              level={level + 1}
+              visited={visited}
+              maxItems={maxItems}
+            />
+          </div>
+        ))}
+        {shouldTruncate && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent toggling <details>
+              setExpanded(true);
+            }}
+            className={`${expandButtonClass} underline`}
+          >
+            Expand {data.length - maxItems} more...
+          </button>
+        )}
+      </div>
+    </details>
+  );
+}
+
+// Component to render objects with truncation
+function ObjectRenderer({
+  data,
+  level,
+  visited,
+  maxItems,
+}: {
+  data: Record<string, any>;
+  level: number;
+  visited: WeakSet<object>;
+  maxItems: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const { theme } = useThemeStore();
+  const entries = Object.entries(data);
+  const shouldTruncate = entries.length > maxItems && !expanded;
+  const entriesToShow = shouldTruncate ? entries.slice(0, maxItems) : entries;
+
+  // Define button color based on theme
+  const expandButtonClass = theme === 'dark' ? 'text-blue-300' : 'text-blue-500';
+
+  return (
+    <details style={{ paddingLeft: `${level * 12}px` }}>
+      <summary>Object</summary>
+      <div style={{ marginLeft: "20px" }}>
+        {entriesToShow.map(([key, val], idx) => (
+          <div key={idx}>
+            <strong>{key}: </strong>
+            <ComplexDataRenderer
+              data={val}
+              level={level + 1}
+              visited={visited}
+              maxItems={maxItems}
+            />
+          </div>
+        ))}
+        {shouldTruncate && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent toggling <details>
+              setExpanded(true);
+            }}
+            className={`${expandButtonClass} underline`}
+          >
+            Expand {entries.length - maxItems} more...
+          </button>
+        )}
+      </div>
+    </details>
+  );
 }

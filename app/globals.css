@@ -112,6 +112,45 @@
 
 .fontfont {
   font-family: var(--font-fira);
+} 
+
+/* Base styles for the custom scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin; /* Makes the scrollbar narrow in Firefox */
+  scrollbar-color: rgba(100, 100, 100, 0.5) transparent; /* Consistent thumb color with transparent track */
+}
+
+/* WebKit-specific styles (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 12px; /* Narrow scrollbar width */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* Make the track invisible */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.5); /* Consistent gray thumb for both modes */
+  border-radius: 4px; /* Rounded edges for a modern look */
+}
+/* Hide scrollbar buttons */
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  background: transparent;
+}
+
+/* Dark mode adjustments */
+.dark .custom-scrollbar {
+  scrollbar-color: rgba(100, 100, 100, 0.5) transparent; /* Consistent thumb color with transparent track */
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* Keep track invisible in dark mode */
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.5); /* Consistent gray thumb */
+  border-radius: 4px;
 }
 
 :root {
