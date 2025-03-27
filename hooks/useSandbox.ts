@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useConsoleStore } from '@/store/consoleStore';
 
 interface TimerData {
@@ -14,7 +14,6 @@ export function useSandbox(iframeRef: React.RefObject<HTMLIFrameElement>) {
   const attachMessageListener = () => {
     const handleMessage = (event: MessageEvent) => {
       if (event.source !== iframeRef.current?.contentWindow) return;
-
       const data = event.data;
       if (!data || typeof data !== 'object') return;
 
@@ -63,9 +62,7 @@ export function useSandbox(iframeRef: React.RefObject<HTMLIFrameElement>) {
     };
 
     window.addEventListener('message', handleMessage);
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
+    return () => window.removeEventListener('message', handleMessage);
   };
 
   useEffect(() => {
@@ -83,34 +80,44 @@ export function useSandbox(iframeRef: React.RefObject<HTMLIFrameElement>) {
     };
   }, [iframeRef]);
 
-  const startExecutionTimeout = (executionId: string, timeoutMs: number = 5000) => {
+  const startExecutionTimeout = useCallback(
+    (executionId: string, timeoutMs: number = 5000) => {
+      if (executionTimeoutRef.current !== null) {
+        clearTimeout(executionTimeoutRef.current);
+      }
+
+      executionTimeoutRef.current = window.setTimeout(() => {
+        if (iframeRef.current) {
+          const parent = iframeRef.current.parentNode;
+          const newIframe = document.createElement('iframe');
+          newIframe.src = '/sandbox.html';
+          newIframe.sandbox = 'allow-scripts';
+          newIframe.style.display = 'none';
+          newIframe.title = 'Sandboxed Code Execution';
+          if (parent) {
+            parent.replaceChild(newIframe, iframeRef.current);
+            iframeRef.current = newIframe as HTMLIFrameElement;
+            attachMessageListener();
+          }
+
+          addMessageToExecution(executionId, {
+            type: 'error',
+            text: 'Script terminated due to timeout',
+          });
+          setLoading(false);
+        }
+        executionTimeoutRef.current = null;
+      }, timeoutMs);
+    },
+    [iframeRef, addMessageToExecution, setLoading]
+  );
+
+  const clearExecutionTimeout = useCallback(() => {
     if (executionTimeoutRef.current !== null) {
       clearTimeout(executionTimeoutRef.current);
-    }
-
-    executionTimeoutRef.current = window.setTimeout(() => {
-      if (iframeRef.current) {
-        const parent = iframeRef.current.parentNode;
-        const newIframe = document.createElement('iframe');
-        newIframe.src = '/sandbox.html';
-        newIframe.sandbox = 'allow-scripts';
-        newIframe.style.display = 'none';
-        newIframe.title = 'Sandboxed Code Execution';
-        if (parent) {
-          parent.replaceChild(newIframe, iframeRef.current);
-          iframeRef.current = newIframe as HTMLIFrameElement;
-          attachMessageListener();
-        }
-
-        addMessageToExecution(executionId, {
-          type: 'error',
-          text: 'Script terminated due to timeout',
-        });
-        setLoading(false);
-      }
       executionTimeoutRef.current = null;
-    }, timeoutMs);
-  };
+    }
+  }, []);
 
-  return { startExecutionTimeout };
+  return { startExecutionTimeout, clearExecutionTimeout };
 }

@@ -18,11 +18,11 @@ const ConsolePanel = forwardRef((props, ref) => {
     addMessageToExecution,
     isLoading,
     setLoading,
-    clearOutput, // Add clearOutput from the store
+    clearOutput,
   } = useConsoleStore();
   const { theme } = useThemeStore();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const { startExecutionTimeout } = useSandbox(iframeRef);
+  const { startExecutionTimeout, clearExecutionTimeout } = useSandbox(iframeRef);
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupPayload, setPopupPayload] = useState<{
     mode: 'alert' | 'prompt' | 'confirm';
@@ -31,6 +31,7 @@ const ConsolePanel = forwardRef((props, ref) => {
     id?: string;
     executionId?: string;
   } | null>(null);
+  const hasClearedOutput = useRef(false); // Track if clearOutput has run
 
   const runCode = (code: string) => {
     if (iframeRef.current) {
@@ -43,10 +44,12 @@ const ConsolePanel = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({ runCode }), [runCode]);
 
   useEffect(() => {
-    // 1. Clear old output on mount
-    clearOutput();
+    // Only call clearOutput once on the initial mount
+    if (!hasClearedOutput.current) {
+      clearOutput();
+      hasClearedOutput.current = true;
+    }
 
-    // 2. Create the iframe dynamically if it doesn’t exist
     if (!iframeRef.current) {
       const newIframe = document.createElement('iframe');
       newIframe.src = '/sandbox.html';
@@ -57,7 +60,6 @@ const ConsolePanel = forwardRef((props, ref) => {
       iframeRef.current = newIframe;
     }
 
-    // 3. Attach message listener
     function handleMessage(event: MessageEvent) {
       if (event.source !== iframeRef.current?.contentWindow) return;
 
@@ -75,6 +77,7 @@ const ConsolePanel = forwardRef((props, ref) => {
           id: data.promptId,
           executionId: data.executionId,
         });
+        clearExecutionTimeout();
         setPopupVisible(true);
       } else if (data.type === 'sandbox-confirm') {
         setPopupPayload({
@@ -83,6 +86,7 @@ const ConsolePanel = forwardRef((props, ref) => {
           id: data.confirmId,
           executionId: data.executionId,
         });
+        clearExecutionTimeout();
         setPopupVisible(true);
       } else if (Array.isArray(data)) {
         data.forEach((msgObj) => {
@@ -125,18 +129,14 @@ const ConsolePanel = forwardRef((props, ref) => {
 
     window.addEventListener('message', handleMessage);
 
-    // Cleanup on unmount
     return () => {
       window.removeEventListener('message', handleMessage);
-      // Remove the iframe from the DOM
       if (iframeRef.current) {
         document.body.removeChild(iframeRef.current);
         iframeRef.current = null;
       }
-      // Clear output again to reset state
-      clearOutput();
     };
-  }, [addMessageToExecution, setLoading, clearOutput]);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   const handlePopupClose = (result?: string | boolean | null) => {
     setPopupVisible(false);
@@ -161,6 +161,9 @@ const ConsolePanel = forwardRef((props, ref) => {
           },
           '*'
         );
+      }
+      if (popupPayload.executionId) {
+        startExecutionTimeout(popupPayload.executionId, 5000);
       }
     }
     setPopupPayload(null);
