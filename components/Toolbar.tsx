@@ -1,13 +1,11 @@
-// components/Toolbar.tsx
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import IconWithHover from "./IconWithHover";
 import { useThemeStore } from "@/store/themeStore";
 import { useEditorStore } from "@/store/editorStore";
 import { useConsoleStore } from "@/store/consoleStore";
 import { toast } from "react-toastify";
 import { parse } from "acorn";
-import { IconTrash, IconFilter } from "@tabler/icons-react";
 
 interface ToolbarProps {
   consolePanelRef: React.RefObject<{ runCode: (code: string) => void }>;
@@ -18,6 +16,27 @@ export default function Toolbar({ consolePanelRef }: ToolbarProps) {
   const { theme, toggleTheme } = useThemeStore();
   const { content, setContent } = useEditorStore();
   const { clearOutput, displayMode, toggleDisplayMode, setLoading } = useConsoleStore();
+  const [isMobile, setIsMobile] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownOpen && !event.target.closest('.filter-dropdown')) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [dropdownOpen]);
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
@@ -77,7 +96,7 @@ export default function Toolbar({ consolePanelRef }: ToolbarProps) {
 
   return (
     <div
-      className={`h-[35px] flex flex-row items-center z-50 shadow-xl pl-10 gap-2 shadow-xl ${
+      className={`h-[35px] flex flex-row items-center z-50 shadow-xl pl-10 gap-2 ${
         theme === "dark"
           ? "bg-gray-800 text-white"
           : "bg-gray-100 border-b-2 border-gray-200 text-black"
@@ -115,14 +134,46 @@ export default function Toolbar({ consolePanelRef }: ToolbarProps) {
         className="flex items-center w-fit h-fit"
         onClick={() => clearOutput()}
       />
-      <IconWithHover
-        variant="filter"
-        className="flex items-center w-fit h-fit"
-        onClick={toggleDisplayMode}
-      />
-      <span className="text-sm ml-2">
-        {displayMode === "all" ? "Showing All" : "Showing Last Only"}
-      </span>
+      <div className="relative">
+        <IconWithHover
+          variant="filter"
+          className="flex items-center w-fit h-fit"
+          onClick={() => {
+            if (isMobile) {
+              setDropdownOpen(!dropdownOpen);
+            } else {
+              toggleDisplayMode();
+            }
+          }}
+        />
+        {isMobile && dropdownOpen && (
+          <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 shadow-lg rounded-md filter-dropdown z-50">
+            <button
+              className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => {
+                useConsoleStore.setState({ displayMode: 'all' });
+                setDropdownOpen(false);
+              }}
+            >
+              Show All
+            </button>
+            <button
+              className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => {
+                useConsoleStore.setState({ displayMode: 'lastOnly' });
+                setDropdownOpen(false);
+              }}
+            >
+              Show Last Only
+            </button>
+          </div>
+        )}
+      </div>
+      {!isMobile && (
+        <span className="text-sm ml-2">
+          {displayMode === "all" ? "Showing All" : "Showing Last Only"}
+        </span>
+      )}
     </div>
   );
 }

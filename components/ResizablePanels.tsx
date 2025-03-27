@@ -60,7 +60,7 @@ export default function ResizablePanel({ consolePanelRef }: ResizablePanelProps)
 
   return (
     <main
-      className={`flex flex-1 w-screen overflow-hidden ${
+      className={`flex flex-col md:flex-row  flex-1 w-screen overflow-hidden ${
         theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
       }`}
     >
