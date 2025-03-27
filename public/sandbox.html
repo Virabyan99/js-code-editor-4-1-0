@@ -177,11 +177,13 @@
       };
 
       // Override alert
-      const originalAlert = window.alert;
-      window.alert = (message) => {
+     // Override alert to handle multiple arguments
+     const originalAlert = window.alert;
+      window.alert = (...args) => {
+        const message = args.map(arg => String(arg)).join(' ');
         window.parent.postMessage({
           type: 'sandbox-alert',
-          text: String(message),
+          text: message,
         }, '*');
       };
 
